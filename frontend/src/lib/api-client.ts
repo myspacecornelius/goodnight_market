@@ -95,13 +95,12 @@ class ApiClient {
 
   // Auth methods
   async login(username: string, password: string): Promise<AuthTokens> {
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
+    const formData = new URLSearchParams();
+    formData.set('username', username);
+    formData.set('password', password);
+    formData.set('grant_type', 'password');
 
-    const response = await this.client.post<AuthTokens>('/auth/token', formData, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
+    const response = await this.client.post<AuthTokens>('/auth/token', formData);
 
     this.setAuthToken(response.data.access_token);
     return response.data;
