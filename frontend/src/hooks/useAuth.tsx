@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import type { User } from '@/lib/api-client'
-import { LoginFormData, RegisterFormData } from '@/lib/validations/auth'
+import type { LoginFormData, RegisterFormData } from '@/lib/validations/auth'
 
 export interface AuthContextType {
   user: User | null
@@ -55,11 +55,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
       try {
-        const tokens = await apiClient.login(data.email, data.password)
+        const tokens = await apiClient.login(data.username, data.password)
         return tokens
       } catch (error: any) {
         if (error.response?.status === 401) {
-          throw new Error('Invalid email or password')
+          throw new Error('Invalid username or password')
         } else if (error.response?.status === 429) {
           throw new Error('Too many login attempts. Please try again later.')
         } else if (error.response?.data?.detail) {

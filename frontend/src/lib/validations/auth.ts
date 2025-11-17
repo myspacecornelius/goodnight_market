@@ -25,7 +25,7 @@ const usernameSchema = z
 
 // Login form schema
 export const loginSchema = z.object({
-  email: emailSchema,
+  username: usernameSchema,
   password: z.string().min(1, 'Password is required')
 })
 

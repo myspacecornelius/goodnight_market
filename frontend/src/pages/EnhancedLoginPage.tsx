@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom'
 import { 
   ArrowLeft, 
   Lock, 
-  Mail, 
   User, 
   Loader2, 
   Eye,
@@ -59,7 +58,7 @@ export default function EnhancedLoginPage() {
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: ''
     }
   })
@@ -150,7 +149,7 @@ export default function EnhancedLoginPage() {
                 </CardTitle>
               </div>
               <CardDescription>
-                {authMode === 'login' && 'Sign in to your account to continue'}
+                {authMode === 'login' && 'Sign in with your Dharma username'}
                 {authMode === 'register' && 'Create your account to get started'}
                 {authMode === 'forgot-password' && 'Enter your email to reset your password'}
               </CardDescription>
@@ -169,13 +168,14 @@ export default function EnhancedLoginPage() {
                     className="space-y-4"
                   >
                     <FormField
-                      label="Email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={loginForm.watch('email')}
-                      onChange={(value) => loginForm.setValue('email', value)}
-                      error={loginForm.formState.errors.email?.message}
-                      autoComplete="email"
+                      label="Username"
+                      type="text"
+                      placeholder="boston_kicks_og"
+                      value={loginForm.watch('username')}
+                      onChange={(value) => loginForm.setValue('username', value)}
+                      error={loginForm.formState.errors.username?.message}
+                      autoComplete="username"
+                      hint="Use your Dharma handle. Demo data uses the password dharma2024."
                       autoFocus
                     />
 

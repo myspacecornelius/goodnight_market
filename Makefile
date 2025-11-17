@@ -62,7 +62,7 @@ up: doctor
 	@docker compose up -d --build
 	@echo ""
 	@echo "🔥 Dharma is starting up!"
-	@echo "📱 Frontend: http://localhost:5173"
+	@echo "📱 Frontend: http://localhost:5178"
 	@echo "🔌 API: http://localhost:8000"
 	@echo "📊 Grafana: http://localhost:3001"
 	@echo "📈 Prometheus: http://localhost:9090"

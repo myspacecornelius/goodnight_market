@@ -8,12 +8,12 @@ import { z } from 'zod'
 
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/hooks/useAuth'
 
 const formSchema = z.object({
-  email: z.string().email(),
+  username: z.string().min(3),
   password: z.string().min(8),
 })
 
@@ -25,7 +25,7 @@ const LoginPage = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   })
@@ -64,13 +64,16 @@ const LoginPage = () => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
-                        <Input placeholder="m@example.com" {...field} />
+                        <Input placeholder="boston_kicks_og" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Use your Dharma handle (demo accounts use <code>dharma2024</code> as the password).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
