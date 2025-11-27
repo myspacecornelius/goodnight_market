@@ -1,32 +1,24 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
-# Check if the root .env file exists
-if [ ! -f ".env" ]; then
+ROOT_ENV=".env"
+FRONTEND_ENV="frontend/.env"
+
+if [ ! -f "${ROOT_ENV}" ]; then
   echo "Root .env file not found. Please create one from .env.example."
   exit 1
 fi
 
-# Load the root .env file
-export $(grep -v '^#' .env | xargs)
+# Load everything from the root .env so we can template the frontend file.
+set -o allexport
+source "${ROOT_ENV}"
+set +o allexport
 
-# Create the frontend .env file
-cat << EOF > frontend/.env
-VITE_API_URL=${VITE_API_URL}
-VITE_WS_URL=${VITE_WS_URL}
-VITE_ENV=${VITE_ENV}
+cat << EOF > "${FRONTEND_ENV}"
+VITE_API_URL=${VITE_API_URL:-}
+VITE_WS_URL=${VITE_WS_URL:-}
+VITE_ENV=${VITE_ENV:-}
 EOF
 
-# Create the backend .env file
-cat << EOF > .env
-POSTGRES_USER=${POSTGRES_USER}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-POSTGRES_DB=${POSTGRES_DB}
-DATABASE_URL=${DATABASE_URL}
-REDIS_URL=${REDIS_URL}
-ENVIRONMENT=${ENVIRONMENT}
-GEMINI_API_KEY=${GEMINI_API_KEY}
-EOF
-
-echo ".env files for frontend and backend have been created successfully."
+echo "frontend/.env has been updated from ${ROOT_ENV}."
