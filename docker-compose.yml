@@ -152,6 +152,82 @@ services:
     networks:
       - appnet
 
+  # =============================================================================
+  # SNEAKER AUTOMATION SERVICES
+  # =============================================================================
+
+  checkout:
+    build:
+      context: ./services/checkout
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - appnet
+    profiles:
+      - automation
+
+  monitor:
+    build:
+      context: ./services/monitor
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - appnet
+    profiles:
+      - automation
+
+  proxy:
+    build:
+      context: ./services/proxy
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "${PROXY_METRICS_PORT:-9091}:9091"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - appnet
+    profiles:
+      - automation
+
+  modelsrv:
+    build:
+      context: ./modelsrv
+      dockerfile: Dockerfile
+    environment:
+      - MODEL_NAME=price_forecaster
+    ports:
+      - "${MODEL_PORT:-8501}:8501"
+    networks:
+      - appnet
+    profiles:
+      - ml
+
 volumes:
   postgres_data:
   redis_data:

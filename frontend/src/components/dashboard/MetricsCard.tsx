@@ -1,14 +1,15 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { LucideIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
+
+type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>
 
 interface MetricsCardProps {
   title: string
   value: string | number
   subtitle?: string
-  icon: LucideIcon
+  icon: IconComponent
   trend?: {
     value: number
     label: string

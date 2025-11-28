@@ -100,7 +100,12 @@ class ApiClient {
     formData.set('password', password);
     formData.set('grant_type', 'password');
 
-    const response = await this.client.post<AuthTokens>('/auth/token', formData);
+    const response = await this.client.post<AuthTokens>('/auth/token', formData, {
+      headers: {
+        // Override default JSON header so FastAPI treats this as form data
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
 
     this.setAuthToken(response.data.access_token);
     return response.data;

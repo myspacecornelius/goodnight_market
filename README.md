@@ -54,7 +54,7 @@ make setup
 make up
 ```
 
-**That's it.** Open your browser to `http://localhost:5178` and witness Dharma come alive.
+**That's it.** Open your browser to `http://localhost:5177` and witness Dharma come alive.
 
 ### What You'll See
 

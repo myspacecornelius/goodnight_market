@@ -62,7 +62,7 @@ up: doctor
 	@docker compose up -d --build
 	@echo ""
 	@echo "🔥 Dharma is starting up!"
-	@echo "📱 Frontend: http://localhost:5178"
+	@echo "📱 Frontend: http://localhost:5177"
 	@echo "🔌 API: http://localhost:8000"
 	@echo "📊 Grafana: http://localhost:3001"
 	@echo "📈 Prometheus: http://localhost:9090"
@@ -95,7 +95,7 @@ migrate:
 # Seed demo data
 seed:
 	@echo "🌱 Seeding demo data..."
-	@docker compose exec api python -m backend.seed
+	@docker compose exec api python -m services.seed
 	@echo "✅ Demo data populated"
 
 # Run tests
@@ -105,7 +105,7 @@ test:
 		echo "Testing frontend..."; \
 		cd frontend && npm test; \
 	fi
-	@if [ -f backend/requirements.txt ]; then \
+	@if [ -f requirements.txt ]; then \
 		echo "Testing backend..."; \
 		docker compose exec api python -m pytest tests/ -v; \
 	fi

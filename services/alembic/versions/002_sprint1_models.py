@@ -20,46 +20,6 @@ depends_on = None
 
 def upgrade():
     """Add Sprint 1 models"""
-    
-    # Create signal_type enum
-    signal_type_enum = sa.Enum(
-        'SPOTTED', 'STOCK_CHECK', 'LINE_UPDATE', 'INTEL_REPORT', 
-        'HEAT_CHECK', 'DROP_ALERT', 'GENERAL',
-        name='signal_type_enum'
-    )
-    try:
-        signal_type_enum.create(op.get_bind())
-    except:
-        pass  # Enum might already exist
-    
-    # Create visibility enum (if not exists from posts)
-    visibility_enum = sa.Enum('public', 'local', 'followers', 'private', name='visibility_enum')
-    try:
-        visibility_enum.create(op.get_bind())
-    except:
-        pass  # Enum might already exist
-    
-    # Create drop_status enum
-    drop_status_enum = sa.Enum(
-        'upcoming', 'live', 'sold_out', 'delayed', 'cancelled', 'ended',
-        name='drop_status_enum'
-    )
-    try:
-        drop_status_enum.create(op.get_bind())
-    except:
-        pass  # Enum might already exist
-    
-    # Create retailer_type enum
-    retailer_type_enum = sa.Enum(
-        'NIKE', 'ADIDAS', 'FOOTLOCKER', 'FINISH_LINE', 'CHAMPS', 'FOOTACTION',
-        'JD_SPORTS', 'SNEAKERSNSTUFF', 'END', 'SIZE', 'BOUTIQUE', 'CONSIGNMENT', 'OTHER',
-        name='retailer_type_enum'
-    )
-    try:
-        retailer_type_enum.create(op.get_bind())
-    except:
-        pass  # Enum might already exist
-    
     # Create signals table
     op.create_table('signals',
         sa.Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),

@@ -59,14 +59,28 @@ metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
 
 # CORS middleware - configured from environment
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5178,http://localhost:3000").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+environment = os.getenv("ENVIRONMENT", "development").lower()
+if environment == "production":
+    cors_origins = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5177,http://localhost:3000",
+    ).split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # In non-production (local dev), allow all origins to avoid CORS friction
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,  # required when using "*" origins
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Security & tracing middlewares
 app.add_middleware(SecurityHeadersMiddleware)

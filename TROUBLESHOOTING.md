@@ -7,7 +7,7 @@ This document provides solutions to common problems you might encounter while de
 **Problem:** A service fails to start, and the logs indicate a "port is already allocated" or "address already in use" error.
 
 **Common ports:**
-- `5173` - Frontend dev server (Vite)
+- `5177` - Frontend dev server (Vite)
 - `8000` - Backend API (FastAPI)
 - `5432` - PostgreSQL database
 - `6379` - Redis cache
