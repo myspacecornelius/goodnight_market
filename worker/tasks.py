@@ -554,6 +554,14 @@ def process_checkout_results(self):
         logger.error(f"Checkout result processing failed: {e}")
         self.retry(exc=e, countdown=10)
 
+# Import feed tasks
+from worker.feed_tasks import (
+    compute_listing_rankings,
+    update_heat_indexes,
+    find_trade_matches,
+    cleanup_expired_feed_data
+)
+
 # Scheduled tasks
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -592,6 +600,36 @@ def setup_periodic_tasks(sender, **kwargs):
         86400.0,
         cleanup_old_data.s(),
         name='Daily cleanup'
+    )
+    
+    # === Feed V2 Tasks ===
+    
+    # Update listing rankings every 5 minutes
+    sender.add_periodic_task(
+        300.0,
+        compute_listing_rankings.s(),
+        name='Compute listing rankings'
+    )
+    
+    # Update heat indexes every 10 minutes
+    sender.add_periodic_task(
+        600.0,
+        update_heat_indexes.s(),
+        name='Update heat indexes'
+    )
+    
+    # Find trade matches every 15 minutes
+    sender.add_periodic_task(
+        900.0,
+        find_trade_matches.s(),
+        name='Find trade matches'
+    )
+    
+    # Clean up expired feed data every hour
+    sender.add_periodic_task(
+        3600.0,
+        cleanup_expired_feed_data.s(),
+        name='Cleanup expired feed data'
     )
 
 # WebSocket task for real-time updates

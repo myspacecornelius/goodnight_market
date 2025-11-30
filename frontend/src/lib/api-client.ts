@@ -59,6 +59,115 @@ export interface LacesTransaction {
   created_at: string;
 }
 
+// ============================================
+// MARKETPLACE / FEED V2 TYPES
+// ============================================
+
+export interface Listing {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  brand: string;
+  sku?: string;
+  colorway?: string;
+  size: string;
+  size_type: string;
+  condition: 'DS' | 'VNDS' | 'EXCELLENT' | 'GOOD' | 'FAIR' | 'BEAT';
+  condition_notes?: string;
+  has_box: boolean;
+  has_extras: boolean;
+  images: string[];
+  authenticity_photos?: string[];
+  authenticity_score: number;
+  is_verified: boolean;
+  price?: number;
+  original_price?: number;
+  price_drop_percent: number;
+  trade_intent: 'SALE' | 'TRADE' | 'BOTH';
+  trade_interests?: string[];
+  trade_notes?: string;
+  h3_index: string;
+  distance_miles?: number;
+  rank_score: number;
+  demand_score: number;
+  view_count: number;
+  save_count: number;
+  message_count: number;
+  status: string;
+  visibility: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface HyperlocalFeedResponse {
+  listings: Listing[];
+  total_count: number;
+  radius_miles: number;
+  center_h3: string;
+  heat_level: 'cold' | 'warm' | 'hot' | 'fire';
+}
+
+export interface HeatIndexResponse {
+  h3_index: string;
+  lat: number;
+  lng: number;
+  heat_score: number;
+  heat_level: string;
+  velocities: {
+    save_velocity: number;
+    dm_velocity: number;
+    listing_velocity: number;
+  };
+  volume: {
+    active_listings: number;
+    active_users: number;
+  };
+  trending: {
+    brands: Array<{ brand: string; score: number }>;
+    skus: Array<{ sku: string; name: string; score: number }>;
+  };
+  price: {
+    avg_listing_price?: number;
+    price_trend?: string;
+  };
+  window_hours: number;
+  updated_at?: string;
+}
+
+export interface ActivityRibbonItem {
+  id: string;
+  type: string;
+  entity_type: string;
+  entity_id: string;
+  display_text?: string;
+  payload: Record<string, any>;
+  created_at: string;
+}
+
+export interface ActivityRibbonResponse {
+  events: ActivityRibbonItem[];
+  has_more: boolean;
+}
+
+export interface TradeMatch {
+  id: string;
+  match_type: 'TWO_WAY' | 'THREE_WAY';
+  you_offer: { listing_id: string; title: string };
+  you_receive: { listing_id: string; title: string };
+  other_parties: number;
+  locality_score: number;
+  match_score: number;
+  status: string;
+  your_acceptance?: { accepted: boolean; at?: string };
+  created_at: string;
+}
+
+export interface TradeMatchListResponse {
+  matches: TradeMatch[];
+  total_count: number;
+}
+
 class ApiClient {
   private client: AxiosInstance;
   private authToken: string | null = null;
@@ -210,6 +319,84 @@ class ApiClient {
   async createRelease(data: any) {
     const response = await this.client.post('/releases/', data);
     return response.data;
+  }
+
+  // ============================================
+  // MARKETPLACE / FEED V2
+  // ============================================
+
+  // Listing types
+  async getHyperlocalListings(params: {
+    lat: number;
+    lng: number;
+    radius?: number;
+    brand?: string;
+    size?: string;
+    condition?: string;
+    trade_intent?: string;
+    min_price?: number;
+    max_price?: number;
+    sort_by?: 'rank' | 'price' | 'newest' | 'distance';
+    limit?: number;
+    offset?: number;
+  }): Promise<HyperlocalFeedResponse> {
+    const response = await this.client.get<HyperlocalFeedResponse>('/v2/feed/hyperlocal', {
+      params: {
+        lat: params.lat,
+        lng: params.lng,
+        radius: params.radius || 3.0,
+        brand: params.brand,
+        size: params.size,
+        condition: params.condition,
+        trade_intent: params.trade_intent,
+        min_price: params.min_price,
+        max_price: params.max_price,
+        sort_by: params.sort_by || 'rank',
+        limit: params.limit || 50,
+        offset: params.offset || 0,
+      },
+    });
+    return response.data;
+  }
+
+  async getNeighborhoodHeat(lat: number, lng: number): Promise<HeatIndexResponse> {
+    const response = await this.client.get<HeatIndexResponse>('/v2/feed/heat-index', {
+      params: { lat, lng },
+    });
+    return response.data;
+  }
+
+  async getActivityRibbon(lat: number, lng: number, radius: number = 3.0): Promise<ActivityRibbonResponse> {
+    const response = await this.client.get<ActivityRibbonResponse>('/v2/feed/activity-ribbon', {
+      params: { lat, lng, radius },
+    });
+    return response.data;
+  }
+
+  async getTradeMatches(): Promise<TradeMatchListResponse> {
+    const response = await this.client.get<TradeMatchListResponse>('/v2/feed/trade-matches');
+    return response.data;
+  }
+
+  async acceptTradeMatch(matchId: string): Promise<void> {
+    await this.client.post(`/v2/feed/trade-matches/${matchId}/accept`);
+  }
+
+  async declineTradeMatch(matchId: string): Promise<void> {
+    await this.client.post(`/v2/feed/trade-matches/${matchId}/decline`);
+  }
+
+  async getListing(listingId: string): Promise<Listing> {
+    const response = await this.client.get<Listing>(`/v2/listings/${listingId}`);
+    return response.data;
+  }
+
+  async saveListing(listingId: string): Promise<void> {
+    await this.client.post(`/v2/listings/${listingId}/save`);
+  }
+
+  async unsaveListing(listingId: string): Promise<void> {
+    await this.client.delete(`/v2/listings/${listingId}/save`);
   }
 
   // Health check

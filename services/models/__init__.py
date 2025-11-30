@@ -14,8 +14,17 @@ from services.models.drop import Drop, Store, DropStore
 from services.models.dropzone import DropZone, DropZoneMember, DropZoneCheckIn
 from services.models.heat_map_tile import HeatMapTile
 
+# Feed v2 models
+from services.models.listing import Listing, ListingSave
+from services.models.feed_event import FeedEvent
+from services.models.heat_index import NeighborhoodHeatIndex
+from services.models.trade_match import TradeMatch, UserWishlist
+
 __all__ = [
     "Base", "User", "Post", "Like", "Save", "Release", "Subscription", 
     "Location", "LacesLedger", "UserSession", "Signal", "Drop", "Store", "DropStore",
-    "DropZone", "DropZoneMember", "DropZoneCheckIn", "HeatMapTile"
+    "DropZone", "DropZoneMember", "DropZoneCheckIn", "HeatMapTile",
+    # Feed v2
+    "Listing", "ListingSave", "FeedEvent", "NeighborhoodHeatIndex", 
+    "TradeMatch", "UserWishlist"
 ]

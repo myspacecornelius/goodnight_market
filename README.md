@@ -5,15 +5,6 @@
 [![CI](https://github.com/myspacecornelius/Night_Market/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/myspacecornelius/Night_Market/actions/workflows/ci-cd.yml)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/myspacecornelius/Night_Market)
 
----
-
-> *"In a world of bots and backdoors, we're building something different.  
-> A place where sneaker culture thrives on community, not just code.  
-> Where your contribution matters more than your connections.
-> Welcome to Dharma."*
-
----
-
 ## 🌟 The Vision
 
 **Dharma isn't just another sneaker bot.** It's the foundation for a new kind of sneaker community—one that rewards authenticity, celebrates local culture, and puts power back in the hands of real enthusiasts.
@@ -45,7 +36,7 @@ The sneaker game has been hijacked by corporate interests and exclusive access. 
 ```bash
 # 1️⃣ Clone and enter Dharma
 git clone https://github.com/myspacecornelius/Night_Market.git
-cd Night_Market-6
+cd Night_Market
 
 # 2️⃣ Set up your environment
 make setup
@@ -89,6 +80,88 @@ make up
 - **`postgres`** - Community data with geospatial superpowers
 - **`redis`** - Real-time caching and message queuing
 - **`grafana`** - Beautiful dashboards for community insights
+
+---
+
+## 🛍️ Marketplace Feed v2 (Hyperlocal Listings)
+*Underground marketplace, block-level awareness*
+
+The **Feed v2** system powers a hyperlocal marketplace experience:
+
+- **Listings Feed**: H3-indexed listings ranked by proximity, demand, and freshness
+- **Neighborhood Heat Index**: Demand metrics per micro-neighborhood (saves, views, DMs, trades)
+- **Activity Ribbon**: Real-time ticker of new listings, price drops, sales, and trade activity
+- **Trade Match Layer**: Suggested trades based on your inventory and wishlist
+
+### Backend Components
+
+- `services/core/h3_geo.py` – Uber H3 geospatial helpers
+- `services/models/listing.py` – `Listing` + `ListingSave` models
+- `services/models/feed_event.py` – `FeedEvent` for event-driven activity
+- `services/models/heat_index.py` – `NeighborhoodHeatIndex` with heat scoring
+- `services/models/trade_match.py` – `TradeMatch` + `UserWishlist`
+- `services/routers/feed_v2.py` – Hyperlocal feed, heat index, activity ribbon, trade matches, listing CRUD
+- `services/routers/activity_stream.py` – WebSocket activity stream
+- `worker/feed_tasks.py` – Celery tasks for ranking, heat updates, trade matching, cleanup
+- `services/alembic/versions/004_feed_v2_models.py` – DB migration for all of the above
+
+### Core API Endpoints
+
+```text
+GET  /v2/feed/hyperlocal          # Hyperlocal listings feed
+GET  /v2/feed/heat-index          # Neighborhood heat index for a point
+GET  /v2/feed/heat-index/map      # Heatmap-ready data
+GET  /v2/feed/activity-ribbon     # Recent activity ticker
+GET  /v2/feed/trade-matches       # Suggested trades for current user
+POST /v2/feed/trade-matches/{id}/accept
+POST /v2/feed/trade-matches/{id}/decline
+
+POST /v2/listings                 # Create listing
+GET  /v2/listings/{id}            # Listing detail
+POST /v2/listings/{id}/save       # Save/bookmark listing
+DELETE /v2/listings/{id}/save     # Un-save
+POST /v2/listings/{id}/price-drop # Register a price drop
+POST /v2/listings/{id}/sold       # Mark as sold
+
+WS   /ws/activity                 # Real-time feed events by geo
+WS   /ws/listing/{id}             # Real-time updates for a listing
+```
+
+### Seeding Demo Marketplace Data
+
+The project includes a seed script to populate a realistic marketplace:
+
+- Cities: **Boston, NYC, LA, Chicago**
+- Brands: Jordan, Nike, Adidas, New Balance, Yeezy, etc.
+- Conditions: DS, VNDS, EXCELLENT, GOOD, FAIR
+- Automatic **heat index** computation per H3 cell
+
+Run from the repo root:
+
+```bash
+docker compose run --rm api python seed_listings.py clear
+docker compose run --rm api python seed_listings.py 100
+```
+
+> Note: `make up` already runs migrations. Seeding is optional but highly recommended for the demo.
+
+### Frontend Experience
+
+- **Route**: `http://localhost:5177/marketplace`
+- **Page**: `frontend/src/pages/MarketplacePage.tsx`
+- **Components**:
+  - `ListingCard` (`frontend/src/components/marketplace/ListingCard.tsx`)
+  - `ActivityRibbon` (`frontend/src/components/marketplace/ActivityRibbon.tsx`)
+
+The Marketplace page:
+
+- Detects your location (or defaults to Boston)
+- Calls the `/v2/feed/hyperlocal` endpoint via `apiClient.getHyperlocalListings()`
+- Shows:
+  - Grid of nearby listings with price, condition, distance, and engagement stats
+  - Live activity ribbon showing new listings and price drops
+  - Heat level badge (cold / warm / hot / fire) based on `NeighborhoodHeatIndex`
+  - Filters for radius, sort, condition, and text search
 
 ---
 

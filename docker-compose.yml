@@ -4,7 +4,8 @@ services:
   postgres:
     platform: linux/amd64
     image: postgis/postgis:15-3.4
-    # No host port published; access via service name on network
+    ports:
+      - "5432:5432"
     env_file:
       - .env
     volumes:

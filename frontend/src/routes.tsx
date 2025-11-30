@@ -21,6 +21,7 @@ const Quests = lazy(() => import('@/pages/Quests'));
 const UiGallery = lazy(() => import('@/pages/UiGallery'));
 const Shop = lazy(() => import('@/pages/Shop'));
 const Tasks = lazy(() => import('@/pages/Tasks'));
+const Marketplace = lazy(() => import('@/pages/MarketplacePage'));
 
 
 // New Components
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
       { path: 'gallery', element: <UiGallery /> },
       { path: 'shop', element: <Shop /> },
       { path: 'tasks', element: <Tasks /> },
+      { path: 'marketplace', element: <Marketplace /> },
     ],
   },
   {

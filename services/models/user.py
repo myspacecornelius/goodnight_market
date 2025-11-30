@@ -38,6 +38,9 @@ class User(Base):
     signals = relationship("Signal", back_populates="user", cascade="all, delete-orphan")
     laces_transactions = relationship("LacesLedger", back_populates="user", cascade="all, delete-orphan")
     
+    # Feed V2 relationships
+    listings = relationship("Listing", back_populates="user", cascade="all, delete-orphan")
+    
     __table_args__ = (
         Index('ix_users_created_at', created_at),
         Index('ix_users_laces_balance', laces_balance.desc()),

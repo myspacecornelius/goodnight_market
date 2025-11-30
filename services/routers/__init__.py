@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from services.routers import users, posts, releases, subscriptions, uploads, auth
 from services.routers import hyperlocal_subs, dropzones_ext, quests_ext, heatmap, laces, dashboard
 from services.routers import signals, drops, stores
+from services.routers import feed_v2, activity_stream
 
 router = APIRouter()
 
@@ -22,3 +23,8 @@ router.include_router(dashboard.router, prefix="/v1", tags=["dashboard"])
 router.include_router(signals.router, prefix="/v1", tags=["signals"])
 router.include_router(drops.router, prefix="/v1", tags=["drops"])
 router.include_router(stores.router, prefix="/v1", tags=["stores"])
+
+# Feed V2 - Hyperlocal marketplace feed
+router.include_router(feed_v2.router, tags=["feed-v2"])
+router.include_router(feed_v2.listings_router, tags=["listings-v2"])
+router.include_router(activity_stream.router, tags=["activity-stream"])
