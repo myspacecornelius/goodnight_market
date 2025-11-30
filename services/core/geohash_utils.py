@@ -31,7 +31,8 @@ class GeohashUtils:
     @staticmethod
     def decode(geohash: str) -> Tuple[float, float]:
         """Decode geohash to coordinates (lat, lng)"""
-        return geohash2.decode(geohash)
+        lat, lng = geohash2.decode(geohash)
+        return float(lat), float(lng)
     
     @staticmethod
     def get_precision_for_zoom(zoom_level: int) -> int:
