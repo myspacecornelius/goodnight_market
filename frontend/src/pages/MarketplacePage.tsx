@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { MapPin, Search, Flame, RefreshCw } from 'lucide-react';
-import { apiClient, type Listing, type HyperlocalFeedResponse, type ActivityRibbonItem } from '@/lib/api-client';
+import { useNavigate } from 'react-router-dom';
+import { MapPin, Search, Flame, RefreshCw, ArrowRight } from 'lucide-react';
+import { apiClient, type Listing, type HyperlocalFeedResponse, type ActivityRibbonItem, type TradeMatch } from '@/lib/api-client';
 import { ListingCard } from '@/components/marketplace/ListingCard';
 import { ActivityRibbon } from '@/components/marketplace/ActivityRibbon';
+import { TradeMatchCard } from '@/components/marketplace/TradeMatchCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -42,8 +44,10 @@ const heatLevelColors: Record<string, string> = {
 };
 
 export function MarketplacePage() {
+  const navigate = useNavigate();
   const [listings, setListings] = useState<Listing[]>([]);
   const [activityEvents, setActivityEvents] = useState<ActivityRibbonItem[]>([]);
+  const [tradeMatches, setTradeMatches] = useState<TradeMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -99,6 +103,16 @@ export function MarketplacePage() {
     }
   }, [location, radius]);
 
+  // Fetch trade matches
+  const fetchTradeMatches = useCallback(async () => {
+    try {
+      const response = await apiClient.getTradeMatches();
+      setTradeMatches(response.matches);
+    } catch (err) {
+      console.error('Error fetching trade matches:', err);
+    }
+  }, []);
+
   // Get user's location
   const requestLocation = () => {
     if ('geolocation' in navigator) {
@@ -120,7 +134,8 @@ export function MarketplacePage() {
   useEffect(() => {
     fetchListings();
     fetchActivity();
-  }, [fetchListings, fetchActivity]);
+    fetchTradeMatches();
+  }, [fetchListings, fetchActivity, fetchTradeMatches]);
 
   // Filter listings by search query
   const filteredListings = listings.filter((listing) => {
@@ -134,8 +149,7 @@ export function MarketplacePage() {
   });
 
   const handleListingClick = (listing: Listing) => {
-    // TODO: Open listing detail modal/page
-    console.log('Listing clicked:', listing.id);
+    navigate(`/marketplace/${listing.id}`);
   };
 
   const handleSaveListing = async (listingId: string) => {
@@ -173,6 +187,28 @@ export function MarketplacePage() {
 
         {/* Activity Ribbon */}
         <ActivityRibbon events={activityEvents} isLoading={isLoading} />
+
+        {/* Trade Matches Section */}
+        {tradeMatches.length > 0 && (
+          <div className="py-2">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 text-blue-500" />
+                Trade Opportunities
+              </h3>
+              <Button variant="ghost" size="sm" className="h-6 text-xs">
+                View All <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 snap-x px-1">
+              {tradeMatches.slice(0, 5).map((match) => (
+                <div key={match.id} className="min-w-[280px] snap-center">
+                  <TradeMatchCard match={match} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative">

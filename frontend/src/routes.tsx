@@ -22,6 +22,7 @@ const UiGallery = lazy(() => import('@/pages/UiGallery'));
 const Shop = lazy(() => import('@/pages/Shop'));
 const Tasks = lazy(() => import('@/pages/Tasks'));
 const Marketplace = lazy(() => import('@/pages/MarketplacePage'));
+const ListingDetail = lazy(() => import('@/pages/ListingDetailPage'));
 
 
 // New Components

@@ -17,6 +17,7 @@ from services.models.user import User
 from services.models.listing import Listing
 from services.models.feed_event import FeedEvent
 from services.models.heat_index import NeighborhoodHeatIndex
+from services.models.trade_match import TradeMatch, MatchType, MatchStatus, UserWishlist
 from services.models.location import Location
 from geoalchemy2.elements import WKTElement
 
@@ -195,6 +196,77 @@ def seed_listings(num_listings: int = 100):
         db.commit()
         print(f"✅ Created {listings_created} listings, {events_created} feed events")
         
+        # Create User Wishlists
+        print("✨ Creating user wishlists...")
+        wishlists_created = 0
+        for user in users:
+            # Create 1-3 wishlist items for each user
+            for _ in range(random.randint(1, 3)):
+                wanted = random.choice(SNEAKER_INVENTORY)
+                size = random.choices(SIZES_MENS, weights=SIZE_WEIGHTS)[0]
+                
+                wishlist = UserWishlist(
+                    user_id=user.user_id,
+                    sku=wanted["sku"],
+                    brand=wanted["brand"],
+                    model=f"{wanted['model']} {wanted['colorway']}",
+                    size=size,
+                    size_type='MENS',
+                    size_flexible=random.choice([True, False]),
+                    max_price=wanted["retail"] * random.uniform(1.1, 1.5),
+                    min_condition=random.choice(['GOOD', 'EXCELLENT', 'VNDS']),
+                    priority=random.randint(1, 10)
+                )
+                db.add(wishlist)
+                wishlists_created += 1
+        
+        db.commit()
+        print(f"✅ Created {wishlists_created} wishlist items")
+
+        # Create Trade Matches
+        print("🤝 Generating trade matches...")
+        matches_created = 0
+        
+        # Fetch all listings to create pairs
+        all_listings = db.query(Listing).filter(Listing.status == 'ACTIVE').all()
+        if len(all_listings) >= 2:
+            # Create random 2-way matches
+            for _ in range(min(20, len(all_listings) // 2)):
+                listing_a = random.choice(all_listings)
+                listing_b = random.choice(all_listings)
+                
+                if listing_a.user_id == listing_b.user_id:
+                    continue
+                
+                # Simulate a match scenario
+                match = TradeMatch.create_two_way(
+                    user_a_id=str(listing_a.user_id),
+                    user_b_id=str(listing_b.user_id),
+                    listing_a_id=str(listing_a.id),
+                    listing_b_id=str(listing_b.id),
+                    listing_a_title=listing_a.title,
+                    listing_b_title=listing_b.title,
+                    locality_score=random.randint(50, 100),
+                    max_distance=random.uniform(0.5, 5.0)
+                )
+                
+                # Randomize status
+                status_choice = random.choices(
+                    [MatchStatus.SUGGESTED, MatchStatus.VIEWED, MatchStatus.PENDING], 
+                    weights=[50, 30, 20]
+                )[0]
+                match.status = status_choice
+                
+                # Calculate fake match score
+                match.match_score = random.uniform(70.0, 99.0)
+                match.value_balance = random.uniform(0.8, 1.2)
+                
+                db.add(match)
+                matches_created += 1
+        
+        db.commit()
+        print(f"✅ Created {matches_created} trade matches")
+
         # Update heat indexes
         print("🔥 Updating heat indexes...")
         update_heat_indexes(db)
