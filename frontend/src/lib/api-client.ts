@@ -6,6 +6,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 export interface AuthTokens {
   access_token: string;
   token_type: string;
+  refresh_token?: string;
+  expires_in?: number;
 }
 
 export interface User {
@@ -150,11 +152,20 @@ export interface ActivityRibbonResponse {
   has_more: boolean;
 }
 
+export interface TradeMatchItem {
+  listing_id: string;
+  title: string;
+  image?: string;
+  size?: string;
+  brand?: string;
+  condition?: string;
+}
+
 export interface TradeMatch {
   id: string;
   match_type: 'TWO_WAY' | 'THREE_WAY';
-  you_offer: { listing_id: string; title: string };
-  you_receive: { listing_id: string; title: string };
+  you_offer: TradeMatchItem;
+  you_receive: TradeMatchItem;
   other_parties: number;
   locality_score: number;
   match_score: number;
@@ -171,6 +182,9 @@ export interface TradeMatchListResponse {
 class ApiClient {
   private client: AxiosInstance;
   private authToken: string | null = null;
+  private refreshToken: string | null = null;
+  private isRefreshing = false;
+  private refreshSubscribers: ((token: string) => void)[] = [];
 
   constructor() {
     this.client = axios.create({
@@ -178,6 +192,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 30000, // 30 second timeout
     });
 
     // Request interceptor for auth
@@ -189,17 +204,103 @@ class ApiClient {
       return config;
     });
 
-    // Response interceptor for error handling
+    // Response interceptor for error handling and token refresh
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          this.clearAuthToken();
-          window.location.href = '/login';
+      async (error) => {
+        const originalRequest = error.config;
+
+        // Handle 401 with token refresh
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          if (this.isRefreshing) {
+            // Wait for the refresh to complete
+            return new Promise((resolve) => {
+              this.refreshSubscribers.push((token: string) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.client(originalRequest));
+              });
+            });
+          }
+
+          originalRequest._retry = true;
+          this.isRefreshing = true;
+
+          try {
+            const newToken = await this.refreshAuthToken();
+            if (newToken) {
+              // Notify all waiting requests
+              this.refreshSubscribers.forEach((callback) => callback(newToken));
+              this.refreshSubscribers = [];
+              
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return this.client(originalRequest);
+            }
+          } catch (refreshError) {
+            // Refresh failed, redirect to login
+            this.clearAuthToken();
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          } finally {
+            this.isRefreshing = false;
+          }
         }
+
+        // Handle rate limiting
+        if (error.response?.status === 429) {
+          const retryAfter = error.response.headers['retry-after'] || 60;
+          console.warn(`Rate limited. Retry after ${retryAfter}s`);
+        }
+
+        // Handle network errors
+        if (!error.response) {
+          console.error('Network error:', error.message);
+        }
+
         return Promise.reject(error);
       }
     );
+  }
+
+  private async refreshAuthToken(): Promise<string | null> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return null;
+    }
+
+    try {
+      const response = await axios.post<AuthTokens>(
+        `${API_BASE_URL}/auth/refresh`,
+        { refresh_token: refreshToken },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const { access_token, refresh_token } = response.data;
+      this.setAuthToken(access_token);
+      if (refresh_token) {
+        this.setRefreshToken(refresh_token);
+      }
+      return access_token;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      return null;
+    }
+  }
+
+  private setRefreshToken(token: string) {
+    this.refreshToken = token;
+    localStorage.setItem('refresh_token', token);
+  }
+
+  private getRefreshToken(): string | null {
+    if (!this.refreshToken) {
+      this.refreshToken = localStorage.getItem('refresh_token');
+    }
+    return this.refreshToken;
+  }
+
+  private clearRefreshToken() {
+    this.refreshToken = null;
+    localStorage.removeItem('refresh_token');
   }
 
   // Auth methods
