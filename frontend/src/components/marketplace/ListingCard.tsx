@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 interface ListingCardProps {
   listing: Listing;
   onSave?: (id: string) => void;
-  onMessage?: (id: string) => void;
   onClick?: (listing: Listing) => void;
 }
 
@@ -42,7 +41,7 @@ const tradeIntentConfig: Record<string, { icon: React.ReactNode; label: string; 
   },
 };
 
-export function ListingCard({ listing, onSave, onMessage: _onMessage, onClick }: ListingCardProps) {
+export function ListingCard({ listing, onSave, onClick }: ListingCardProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);

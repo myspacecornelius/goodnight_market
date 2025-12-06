@@ -234,5 +234,3 @@ export default function ListingDetailPage() {
     </div>
   );
 }
-
-import { RefreshCw } from 'lucide-react';

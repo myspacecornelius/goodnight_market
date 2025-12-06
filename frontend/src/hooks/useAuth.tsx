@@ -41,14 +41,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     refetch: refetchUser 
   } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => apiClient.getCurrentUser(),
+    queryFn: async () => {
+      try {
+        return await apiClient.getCurrentUser();
+      } catch (error) {
+        // If fetching user fails, user is not authenticated
+        logout({ silent: true });
+        throw error;
+      }
+    },
     enabled: isAuthenticated,
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    onError: () => {
-      // If fetching user fails, user is not authenticated
-      logout({ silent: true })
-    }
   })
 
   // Login mutation

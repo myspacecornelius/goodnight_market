@@ -530,6 +530,7 @@ class ApiClient {
 
   logout() {
     this.clearAuthToken();
+    this.clearRefreshToken();
   }
 }
 

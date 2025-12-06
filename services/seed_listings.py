@@ -17,7 +17,7 @@ from services.models.user import User
 from services.models.listing import Listing
 from services.models.feed_event import FeedEvent
 from services.models.heat_index import NeighborhoodHeatIndex
-from services.models.trade_match import TradeMatch, MatchType, MatchStatus, UserWishlist
+from services.models.trade_match import TradeMatch, MatchStatus, UserWishlist
 from services.models.location import Location
 from geoalchemy2.elements import WKTElement
 

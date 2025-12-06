@@ -9,6 +9,7 @@ import router from './routes'
 import './index.css'
 import { ThemeProvider } from './components/ThemeProvider'
 import { AuthProvider } from './hooks/useAuth'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 console.log('🔥 Dharma - Starting the underground network...')
 
@@ -38,15 +39,17 @@ try {
   
   reactRoot.render(
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ThemeProvider defaultTheme="dark" storageKey="dharma-theme">
-            <RouterProvider router={router} />
-            <Toaster position="top-right" />
-          </ThemeProvider>
-        </AuthProvider>
-        {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} position="bottom-right" /> : null}
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemeProvider defaultTheme="dark" storageKey="dharma-theme">
+              <RouterProvider router={router} />
+              <Toaster position="top-right" />
+            </ThemeProvider>
+          </AuthProvider>
+          {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} position="bottom-right" /> : null}
+        </QueryClientProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   )
   
