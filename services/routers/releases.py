@@ -7,7 +7,7 @@ import uuid
 
 from services import models, schemas
 from services.core.database import get_db
-from services.core.security import get_current_admin_user
+from services.core.auth import get_current_admin_user
 
 router = APIRouter(
     prefix="/releases",
