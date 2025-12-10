@@ -19,3 +19,18 @@ export { useInfiniteScroll } from './useInfiniteScroll';
 
 // Mutations
 export { useOptimisticMutation, useListingSave } from './useOptimisticMutation';
+
+// LACES Token Economy
+export {
+  useLacesBalance,
+  useLacesLedger,
+  useEarningOpportunities,
+  useClaimStipend,
+  useBoostPostWithLaces,
+  useLacesBalanceSimple,
+  useCanAffordLaces,
+  useTransactionsByType,
+  useCanClaimDailyStipend,
+  useFormattedBalance,
+  lacesKeys,
+} from './useLaces';

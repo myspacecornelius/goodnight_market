@@ -51,15 +51,29 @@ export interface HyperlocalSignal {
   radius?: number;
 }
 
-export interface LacesTransaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  transaction_type: string;
-  description?: string;
-  related_post_id?: string;
-  created_at: string;
-}
+// Import LACES types from dedicated file
+import type {
+  LacesBalance,
+  LacesTransaction,
+  LacesLedgerResponse,
+  LacesLedgerParams,
+  EarningOpportunitiesResponse,
+  ClaimStipendResponse,
+  BoostPostResponse,
+  GrantLacesRequest,
+  GrantLacesResponse,
+} from '../types/laces';
+
+// Import Drop Zones types
+import type {
+  DropZone,
+  DropZoneDetails,
+  DropZoneCreate,
+  ListDropZonesParams,
+  CheckInRequest,
+  CheckInResponse,
+  JoinDropZoneResponse,
+} from '../types/dropzones';
 
 // ============================================
 // MARKETPLACE / FEED V2 TYPES
@@ -390,23 +404,151 @@ class ApiClient {
     return response.data;
   }
 
-  // LACES methods
-  async getLacesBalance(): Promise<number> {
-    const user = await this.getCurrentUser();
-    return user.laces_balance;
+  // ============================================
+  // LACES TOKEN ECONOMY
+  // ============================================
+
+  /**
+   * Get complete LACES balance information for current user
+   * Includes balance, lifetime earnings/spending, and last stipend date
+   */
+  async getLacesBalance(): Promise<LacesBalance> {
+    const response = await this.client.get<LacesBalance>('/v1/laces/balance');
+    return response.data;
   }
 
-  async getLacesTransactions(skip: number = 0, limit: number = 50): Promise<LacesTransaction[]> {
-    // This endpoint would need to be implemented in the backend
-    try {
-      const response = await this.client.get<LacesTransaction[]>('/laces/transactions', {
-        params: { skip, limit },
-      });
-      return response.data;
-    } catch {
-      // Return empty array if endpoint doesn't exist yet
-      return [];
-    }
+  /**
+   * Get paginated transaction history for current user
+   * @param params - Pagination and filter options
+   */
+  async getLacesLedger(params: LacesLedgerParams = {}): Promise<LacesLedgerResponse> {
+    const response = await this.client.get<LacesLedgerResponse>('/v1/laces/ledger', {
+      params: {
+        page: params.page || 1,
+        limit: params.limit || 20,
+        transaction_type: params.transaction_type,
+      },
+    });
+    return response.data;
+  }
+
+  /**
+   * Get available earning opportunities for current user
+   * Shows what actions they can take to earn LACES
+   */
+  async getEarningOpportunities(): Promise<EarningOpportunitiesResponse> {
+    const response = await this.client.get<EarningOpportunitiesResponse>(
+      '/v1/laces/opportunities'
+    );
+    return response.data;
+  }
+
+  /**
+   * Claim daily LACES stipend (100 LACES)
+   * Can only be claimed once per 24 hours
+   */
+  async claimDailyStipend(): Promise<ClaimStipendResponse> {
+    const response = await this.client.post<ClaimStipendResponse>(
+      '/v1/laces/daily-stipend'
+    );
+    return response.data;
+  }
+
+  /**
+   * Boost a post using LACES tokens
+   * @param postId - ID of the post to boost
+   * @param boostAmount - Amount of LACES to spend (1-100)
+   * @returns Boost details including author reward
+   */
+  async boostPostWithLaces(
+    postId: string,
+    boostAmount: number = 10
+  ): Promise<BoostPostResponse> {
+    const response = await this.client.post<BoostPostResponse>(
+      `/v1/laces/boost-post/${postId}`,
+      null,
+      { params: { boost_amount: boostAmount } }
+    );
+    return response.data;
+  }
+
+  /**
+   * Grant LACES to a user (admin only)
+   * @param request - Grant details including user, amount, and type
+   */
+  async grantLaces(request: GrantLacesRequest): Promise<GrantLacesResponse> {
+    const response = await this.client.post<GrantLacesResponse>(
+      '/v1/laces/grant',
+      request
+    );
+    return response.data;
+  }
+
+  /**
+   * Legacy method - use getLacesBalance() instead
+   * @deprecated Use getLacesBalance() for full balance info
+   */
+  async getLacesBalanceSimple(): Promise<number> {
+    const balance = await this.getLacesBalance();
+    return balance.balance;
+  }
+
+  // ============================================
+  // DROP ZONES
+  // ============================================
+
+  /**
+   * List drop zones with optional filtering
+   * @param params - Bounding box, active status, pagination
+   */
+  async listDropZones(params: ListDropZonesParams = {}): Promise<DropZone[]> {
+    const response = await this.client.get<DropZone[]>('/v1/dropzones', { params });
+    return response.data;
+  }
+
+  /**
+   * Get detailed information about a specific drop zone
+   * Includes stats and recent check-ins
+   */
+  async getDropZoneDetails(dropzoneId: string): Promise<DropZoneDetails> {
+    const response = await this.client.get<DropZoneDetails>(`/v1/dropzones/${dropzoneId}`);
+    return response.data;
+  }
+
+  /**
+   * Create a new drop zone
+   * User becomes the owner automatically
+   */
+  async createDropZone(data: DropZoneCreate): Promise<DropZone> {
+    const response = await this.client.post<DropZone>('/v1/dropzones', data);
+    return response.data;
+  }
+
+  /**
+   * Check in to a drop zone
+   * Verifies location and awards LACES based on streak
+   * @param dropzoneId - ID of the drop zone
+   * @param data - User's current location and optional message/photo
+   */
+  async checkInToDropZone(
+    dropzoneId: string,
+    data: CheckInRequest
+  ): Promise<CheckInResponse> {
+    const response = await this.client.post<CheckInResponse>(
+      `/v1/dropzones/${dropzoneId}/checkin`,
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Join a drop zone as a member
+   */
+  async joinDropZone(dropzoneId: string): Promise<JoinDropZoneResponse> {
+    const response = await this.client.post<JoinDropZoneResponse>(
+      `/v1/dropzones/${dropzoneId}/join`
+    );
+    return response.data;
   }
 
   // Release methods
