@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_
 
-from services.core.database import get_db
+from services.database import get_db
 from services.core.auth import get_current_user
 from services.core.redis_client import get_redis
 from services.core.h3_geo import (

@@ -1,20 +1,24 @@
+"""services.core.database
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
+DEPRECATED: Use :mod:`services.database`.
 
-load_dotenv()
+This module used to provide a second SQLAlchemy engine/session configuration.
+That duplication caused subtle transactional/config drift across the codebase.
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/dbname")
+We keep this module as a thin compatibility shim so any remaining imports
+won't break immediately.
+"""
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from __future__ import annotations
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+import warnings
 
+from services.database import SessionLocal, engine, get_db  # re-export
+
+warnings.warn(
+    "services.core.database is deprecated; use services.database instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+__all__ = ["SessionLocal", "engine", "get_db"]

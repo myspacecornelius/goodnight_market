@@ -8,7 +8,7 @@ export type { AuthContextType } from './useAuth';
 
 // WebSocket
 export { WebSocketProvider, useWebSocket } from './useWebSocket';
-export type { WebSocketMessage } from './useWebSocket';
+export type { WebSocketMessage, WebSocketContextType } from './useWebSocket';
 
 // Marketplace / Feed
 export { useActivityFeed } from './useActivityFeed';
@@ -34,3 +34,52 @@ export {
   useFormattedBalance,
   lacesKeys,
 } from './useLaces';
+
+// Drop Zones
+export {
+  useDropZones,
+  useDropZoneDetails,
+  useCreateDropZone,
+  useCheckInToDropZone,
+  useJoinDropZone,
+  useActiveDropZones,
+  useNearbyDropZones,
+  useDropZoneMemberCount,
+  useDropZoneTotalCheckIns,
+  dropZonesKeys,
+} from './useDropZones';
+
+// Enhanced Signals
+export {
+  useSignals,
+  useSignalHeatmap,
+  useSignalStats,
+  useCreateSignal,
+  useBoostSignal,
+  useSignalsByType,
+  useSignalsByCity,
+  useSignalsInBBox,
+  useSignalsByBrand,
+  useRecentSignals,
+  useCanCreateSignal,
+  getSignalTypeIcon,
+  getSignalTypeLabel,
+  signalsKeys,
+} from './useSignals';
+
+// Listings Management
+export {
+  useListing,
+  useCreateListing,
+  useUpdateListing,
+  useDropListingPrice,
+  useMarkListingSold,
+  useDeleteListing,
+  useSaveListing,
+  useUnsaveListing,
+  useToggleSaveListing,
+  useIsListingOwner,
+  formatPrice,
+  calculatePriceDrop,
+  listingsKeys,
+} from './useListings';

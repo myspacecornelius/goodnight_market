@@ -8,7 +8,7 @@ export interface WebSocketMessage {
   timestamp?: number
 }
 
-interface WebSocketContextType {
+export interface WebSocketContextType {
   isConnected: boolean
   isConnecting: boolean
   lastMessage: WebSocketMessage | null

@@ -1,0 +1,213 @@
+/**
+ * Dharma Design System 2.0
+ * Elegant & Tasteful Design Tokens
+ */
+
+:root {
+  /* ============================================
+     COLORS - Soft Luxury Palette
+     ============================================ */
+  
+  /* Background Colors - Warm Off-White */
+  --background-primary: #FAFAF9;
+  --background-secondary: #F5F5F4;
+  --background-tertiary: #E7E5E4;
+  --surface: #FFFFFF;
+  
+  /* Brand Colors - Elegant & Muted */
+  --primary: #4F46E5;
+  --primary-light: #818CF8;
+  --primary-dark: #3730A3;
+  --primary-subtle: #EEF2FF;
+  
+  --accent: #D97706;
+  --accent-light: #F59E0B;
+  --accent-dark: #B45309;
+  --accent-subtle: #FEF3C7;
+  
+  /* Semantic Colors */
+  --success: #059669;
+  --success-light: #10B981;
+  --success-bg: #D1FAE5;
+  
+  --warning: #D97706;
+  --warning-light: #F59E0B;
+  --warning-bg: #FEF3C7;
+  
+  --error: #DC2626;
+  --error-light: #EF4444;
+  --error-bg: #FEE2E2;
+  
+  --info: #2563EB;
+  --info-light: #3B82F6;
+  --info-bg: #DBEAFE;
+  
+  /* Text Colors */
+  --text-primary: #18181B;
+  --text-secondary: #52525B;
+  --text-tertiary: #A1A1AA;
+  --text-inverse: #FAFAF9;
+  --text-muted: #71717A;
+  
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
+  
+  /* Font Families */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+  --font-serif: 'Fraunces', 'Georgia', 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Courier New', monospace;
+  
+  /* Font Sizes */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  --text-5xl: 3rem;        /* 48px */
+  --text-6xl: 3.75rem;     /* 60px */
+  
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+  
+  /* Font Weights */
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  
+  /* ============================================
+     SPACING - Breathable & Generous
+     ============================================ */
+  
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.5rem;    /* 24px */
+  --space-6: 2rem;      /* 32px */
+  --space-8: 3rem;      /* 48px */
+  --space-10: 4rem;     /* 64px */
+  --space-12: 6rem;     /* 96px */
+  --space-16: 8rem;     /* 128px */
+  --space-20: 10rem;    /* 160px */
+  
+  /* ============================================
+     LAYOUT
+     ============================================ */
+  
+  /* Container Widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+  
+  /* Sidebar */
+  --sidebar-width: 88px;
+  --sidebar-expanded-width: 240px;
+  
+  /* Topbar */
+  --topbar-height: 64px;
+  
+  /* ============================================
+     BORDER RADIUS - Soft & Rounded
+     ============================================ */
+  
+  --radius-sm: 6px;
+  --radius-base: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+  
+  /* ============================================
+     SHADOWS - Subtle & Elegant
+     ============================================ */
+  
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-base: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1), 0 12px 24px rgba(0, 0, 0, 0.06);
+  
+  /* Colored Shadows */
+  --shadow-primary: 0 4px 12px rgba(79, 70, 229, 0.12), 0 2px 4px rgba(79, 70, 229, 0.08);
+  --shadow-accent: 0 4px 12px rgba(217, 119, 6, 0.12), 0 2px 4px rgba(217, 119, 6, 0.08);
+  
+  /* ============================================
+     ANIMATIONS - Soft & Fluid
+     ============================================ */
+  
+  /* Timing Functions */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  
+  /* Durations */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
+  
+  /* ============================================
+     Z-INDEX LAYERS
+     ============================================ */
+  
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip:1600;
+  --z-notification: 1700;
+  
+  /* ============================================
+     MISC
+     ============================================ */
+  
+  /* Blur Effects */
+  --blur-sm: 4px;
+  --blur-base: 8px;
+  --blur-md: 12px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  
+  /* Opacity */
+  --opacity-disabled: 0.5;
+  --opacity-hover: 0.8;
+  --opacity-subtle: 0.6;
+}
+
+/* ============================================
+   DARK MODE (Optional - for special pages)
+   ============================================ */
+
+[data-theme="dark"] {
+  --background-primary: #18181B;
+  --background-secondary: #27272A;
+  --background-tertiary: #3F3F46;
+  --surface: #27272A;
+  
+  --text-primary: #FAFAF9;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-inverse: #18181B;
+}

@@ -12,7 +12,7 @@ from faker import Faker
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from services.core.database import SessionLocal
+from services.database import SessionLocal
 from services.models.user import User
 from services.models.listing import Listing
 from services.models.feed_event import FeedEvent

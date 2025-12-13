@@ -6,7 +6,7 @@ const AppShell = lazy(() => import('./layouts/AppShell'));
 const Dashboard = lazy(() => import('@/app/routes/dashboard'));
 const Heatmap = lazy(() => import('@/pages/Heatmap'));
 const Laces = lazy(() => import('@/pages/Laces'));
-const Dropzones = lazy(() => import('@/pages/Dropzones'));
+const Dropzones = lazy(() => import('@/app/routes/dropzones'));
 const ThriftRoutes = lazy(() => import('@/pages/ThriftRoutes'));
 const Profile = lazy(() => import('@/app/routes/profile'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));

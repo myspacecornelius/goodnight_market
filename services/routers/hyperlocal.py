@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import uuid
 
-from services.core.database import get_db
+from services.database import get_db
 from services.core import security, locations, laces, feed
 from services.schemas import post as post_schemas
 from services.schemas import user as user_schemas

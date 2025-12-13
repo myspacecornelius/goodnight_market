@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from services import models
-from services.core.database import get_db
+from services.database import get_db
 from services.models.session import UserSession
 
 # JWT Configuration

@@ -1,74 +1,19 @@
+/**
+ * Dharma Design System 2.0 - Elegant & Tasteful
+ * Global Styles
+ */
+
+@import './styles/design-tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Dharma Earthy Sophistication - Light Mode */
-    --background: 43 33 19; /* earth-50: warm linen */
-    --foreground: 45 27 6; /* earth-900: rich soil */
- 
-    --card: 0 0% 100%; /* Pure white cards */
-    --card-foreground: 45 27 6;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 45 27 6;
- 
-    --primary: 35 61 25; /* earth-500: rich ochre */
-    --primary-foreground: 250 248 245;
- 
-    --secondary: 28 17 49; /* earth-200: light sand */
-    --secondary-foreground: 107 68 35; /* earth-700 */
- 
-    --muted: 39 31 21; /* earth-100: cream */
-    --muted-foreground: 39 9 9; /* stone-500: sophisticated gray */
- 
-    --accent: 104 24 20; /* sage-500: deep sage */
-    --accent-foreground: 247 249 247;
- 
-    --destructive: 0 72% 51%; /* Earthy red for warnings */
-    --destructive-foreground: 254 242 242;
-
-    --border: 0 0% 90%; /* Subtle stone borders */
-    --input: 0 0% 97%; /* Very light input backgrounds */
-    --ring: 35 61 25; /* earth-500 for focus rings */
- 
-    --radius: 0.75rem;
-  }
- 
-  .dark {
-    /* Dharma Earthy Sophistication - Dark Mode */
-    --background: 45 27 6; /* earth-900: rich soil */
-    --foreground: 43 33 19; /* earth-50: warm linen */
- 
-    --card: 74 44 10; /* earth-800: dark chocolate */
-    --card-foreground: 250 248 247;
- 
-    --popover: 74 44 10;
-    --popover-foreground: 250 248 247;
- 
-    --primary: 35 61 25; /* earth-500: rich ochre */
-    --primary-foreground: 45 27 6;
- 
-    --secondary: 107 68 35; /* earth-700: coffee brown */
-    --secondary-foreground: 244 241 235;
- 
-    --muted: 107 68 35;
-    --muted-foreground: 39 9 9; /* stone-400 */
- 
-    --accent: 104 24 20; /* sage-500: deep sage */
-    --accent-foreground: 15 26 15;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 254 242 242;
- 
-    --border: 0 0% 25%; /* stone-700 */
-    --input: 0 0% 20%; /* stone-800 */
-    --ring: 35 61 25;
-  }
-}
- 
-@layer base {
+  /* ============================================
+     ROOT & BODY SETUP
+     ============================================ */
+  
   * {
     @apply border-border;
   }
@@ -76,192 +21,387 @@
   html {
     scroll-behavior: smooth;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-sans);
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    line-height: var(--leading-normal);
     overflow-x: hidden;
   }
   
-  .dark body {
-    @apply bg-gradient-to-br from-earth-900 to-stone-900;
-  }
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-semibold tracking-tight;
-    @apply text-balance;
+    font-family: var(--font-serif);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
   }
   
-  /* Enhanced scrollbar */
+  h1 {
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+    font-weight: var(--font-bold);
+  }
+  
+  h2 {
+    font-size: var(--text-3xl);
+    line-height: var(--leading-tight);
+  }
+  
+  h3 {
+    font-size: var(--text-2xl);
+    line-height: var(--leading-snug);
+  }
+  
+  h4 {
+    font-size: var(--text-xl);
+    line-height: var(--leading-snug);
+  }
+  
+  p {
+    line-height: var(--leading-relaxed);
+  }
+  
+  /* Display styles for hero text */
+  .display-serif {
+    font-family: var(--font-serif);
+    font-size: var(--text-5xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+  }
+  
+  .heading-serif {
+    font-family: var(--font-serif);
+    font-weight: var(--font-semibold);
+  }
+  
+  /* ============================================
+     SCROLLBAR - Elegant & Minimal
+     ============================================ */
+  
   ::-webkit-scrollbar {
-    @apply w-2;
+    width: 8px;
+    height: 8px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-earth-100 dark:bg-earth-800;
+    background: var(--background-secondary);
+    border-radius: var(--radius-full);
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-earth-300 dark:bg-earth-600 rounded-full;
-    @apply hover:bg-earth-400 dark:hover:bg-earth-500;
-    @apply transition-colors duration-300;
+    background: var(--text-tertiary);
+    border-radius: var(--radius-full);
+    transition: background var(--duration-fast) var(--ease-smooth);
   }
   
-  /* Enhanced focus styles */
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+  
+  /* ============================================
+     FOCUS STATES - Refined
+     ============================================ */
+  
   *:focus-visible {
-    @apply outline-none ring-2 ring-earth-500/30 ring-offset-2 ring-offset-background;
-    @apply transition-all duration-200;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-subtle);
+    transition: box-shadow var(--duration-fast) var(--ease-smooth);
   }
   
-  /* Sophisticated selection styles */
+  /* ============================================
+     SELECTION
+     ============================================ */
+  
   ::selection {
-    @apply bg-primary/20 text-foreground;
+    background-color: var(--primary-subtle);
+    color: var(--text-primary);
+  }
+  
+  /* ============================================
+     SHADCN/UI TOKENS
+     ============================================ */
+  
+  :root {
+    /* Using HSL for Shadcn compatibility - ELEGANT LIGHT THEME */
+    --background: 43 20% 98%;     /* #FAFAF9 - Warm off-white */
+    --foreground: 240 10% 10%;    /* #18181B - Almost black */
+    
+    --card: 0 0% 100%;            /* Pure white for cards */
+    --card-foreground: 240 10% 10%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+    
+    --primary: 244 63% 58%;       /* #4F46E5 - Elegant indigo */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 43 20% 96%;      /* #F5F5F4 - Light gray */
+    --secondary-foreground: 240 10% 10%;
+    
+    --muted: 43 20% 96%;          /* #F5F5F4 - Light gray */
+    --muted-foreground: 240 5% 46%;
+    
+    --accent: 32 95% 44%;         /* #D97706 - Warm amber */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 72% 51%;     /* Red */
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 240 6% 90%;         /* #E7E5E4 - Subtle border */
+    --input: 240 6% 90%;
+    --ring: 244 63% 58%;
+    
+    --radius: 0.5rem;
+  }
+  
+  [data-theme="dark"] {
+    --background: 240 10% 10%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 10% 15%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 10% 15%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 244 63% 60%;
+    --primary-foreground: 0 0% 10%;
+    
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    
+    --accent: 32 95% 44%;
+    --accent-foreground: 0 0% 10%;
+    
+    --destructive: 0 62% 31%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 244 63% 60%;
   }
 }
 
 @layer components {
-  /* Sophisticated magnetic interactions */
-  .magnetic {
-    @apply transition-all duration-200 ease-magnetic cursor-pointer;
-    transform-origin: center;
+  /* ============================================
+     CARD COMPONENTS - Elegant & Soft
+     ============================================ */
+  
+  .card-elegant {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--background-tertiary);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-6);
+    transition: all var(--duration-base) var(--ease-smooth);
   }
   
-  .magnetic:hover {
-    @apply scale-105 -translate-y-1;
-    @apply shadow-glow;
+  .card-elegant:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-primary);
+    transform: translateY(-2px);
   }
   
-  /* Advanced glassmorphism */
-  .glass-card {
-    @apply backdrop-blur-md bg-white/90 dark:bg-earth-800/90;
-    @apply border border-earth-200/50 dark:border-earth-700/50;
-    @apply shadow-medium;
-    @apply transition-all duration-400;
+  .card-floating {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: var(--space-6);
+    transition: all var(--duration-base) var(--ease-smooth);
   }
   
-  .glass-card:hover {
-    @apply bg-white/95 dark:bg-earth-800/95;
-    @apply shadow-hard;
-    @apply border-earth-300/60 dark:border-earth-600/60;
-    @apply backdrop-blur-lg;
+  .card-floating:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px) scale(1.01);
   }
   
-  /* Sophisticated button system */
-  .btn-earth {
-    @apply relative overflow-hidden;
-    @apply bg-earth-500 hover:bg-earth-600 text-earth-50;
-    @apply transition-all duration-300 ease-smooth;
-    @apply shadow-soft hover:shadow-glow;
-    @apply px-6 py-3 rounded-xl font-medium;
+  /* ============================================
+     BUTTON SYSTEM - Refined
+     ============================================ */
+  
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    font-weight: var(--font-medium);
+    padding: 12px 24px;
+    border-radius: var(--radius-base);
+    box-shadow: var(--shadow-primary);
+    transition: all var(--duration-fast) var(--ease-smooth);
+    border: none;
+    cursor: pointer;
   }
   
-  .btn-earth::before {
-    @apply absolute inset-0;
-    @apply bg-gradient-to-r from-transparent via-white/10 to-transparent;
-    @apply translate-x-[-100%] transition-transform duration-500;
-    content: '';
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
   
-  .btn-earth:hover::before {
-    @apply translate-x-[100%];
+  .btn-primary:active {
+    transform: translateY(0);
   }
   
-  .btn-sage {
-    @apply relative overflow-hidden;
-    @apply bg-sage-500 hover:bg-sage-600 text-sage-50;
-    @apply transition-all duration-300 ease-smooth;
-    @apply shadow-soft hover:shadow-glow-sage;
-    @apply px-6 py-3 rounded-xl font-medium;
+  .btn-secondary {
+    background: var(--background-secondary);
+    color: var(--text-primary);
+    font-weight: var(--font-medium);
+    padding: 12px 24px;
+    border-radius: var(--radius-base);
+    border: 1px solid var(--background-tertiary);
+    transition: all var(--duration-fast) var(--ease-smooth);
+    cursor: pointer;
   }
   
-  .btn-sage::before {
-    @apply absolute inset-0;
-    @apply bg-gradient-to-r from-transparent via-white/10 to-transparent;
-    @apply translate-x-[-100%] transition-transform duration-500;
-    content: '';
+  .btn-secondary:hover {
+    background: var(--surface);
+    border-color: var(--primary-light);
+    transform: translateY(-1px);
   }
   
-  .btn-sage:hover::before {
-    @apply translate-x-[100%];
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: var(--font-medium);
+    padding: 12px 24px;
+    border-radius: var(--radius-base);
+    border: none;
+    transition: all var(--duration-fast) var(--ease-smooth);
+    cursor: pointer;
   }
   
-  /* Premium card styles */
-  .card-premium {
-    @apply glass-card rounded-2xl p-6;
-    @apply hover:shadow-neumorphic;
-    @apply transform transition-all duration-400;
+  .btn-ghost:hover {
+    background: var(--background-secondary);
+    color: var(--text-primary);
   }
   
-  .card-premium:hover {
-    @apply scale-[1.02] rotate-1;
+  /* ============================================
+     GLASSMORPHISM - Subtle & Elegant
+     ============================================ */
+  
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-sm);
   }
   
-  /* Floating elements with natural motion */
-  .float-gentle {
-    @apply animate-float;
-    animation-delay: var(--delay, 0s);
+  /* ============================================
+     UTILITY CLASSES
+     ============================================ */
+  
+  .text-muted {
+    color: var(--text-secondary);
   }
   
-  /* Interactive text gradients */
-  .text-gradient-earth {
-    background: linear-gradient(135deg, #a68b5b 0%, #5a8659 50%, #8b6914 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-size: 200% 100%;
-    transition: background-position 0.3s ease;
+  .text-subtle {
+    color: var(--text-tertiary);
   }
   
-  .text-gradient-earth:hover {
-    background-position: 100% 0;
+  .container-elegant {
+    max-width: var(--container-xl);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
   }
   
-  /* Sophisticated navigation */
-  .nav-item {
-    @apply relative px-4 py-2 rounded-lg;
-    @apply transition-all duration-300;
-    @apply hover:bg-earth-100 dark:hover:bg-earth-800;
+  .fade-in {
+    animation: fadeIn var(--duration-slow) var(--ease-smooth);
   }
   
-  .nav-item::after {
-    @apply absolute bottom-0 left-1/2 w-0 h-0.5;
-    @apply bg-earth-500 transition-all duration-300;
-    @apply -translate-x-1/2;
-    content: '';
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
-  .nav-item:hover::after,
-  .nav-item.active::after {
-    @apply w-3/4;
+  .slide-up {
+    animation: slideUp var(--duration-base) var(--ease-smooth);
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
 @layer utilities {
-  /* Animation utilities */
-  .animate-in {
-    @apply animate-pulse;
+  /* ============================================
+     SPACING UTILITIES
+     ============================================ */
+  
+  .space-section {
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-16);
   }
   
-  .animate-up {
-    @apply animate-bounce;
+  .space-content {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
   }
   
-  /* Text utilities */
+  /* ============================================
+     TEXT UTILITIES
+     ============================================ */
+  
   .text-balance {
     text-wrap: balance;
   }
   
-  /* Gradient utilities */
-  .gradient-heat {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+  .text-gradient-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
-  .gradient-neon {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent) / 0.8) 100%);
+  .text-gradient-accent {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
-  /* Hide scrollbar but keep functionality */
+  /* ============================================
+     SHADOW UTILITIES
+     ============================================ */
+  
+  .shadow-elegant {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .shadow-elegant-hover:hover {
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* ============================================
+     SCROLLBAR UTILITIES
+     ============================================ */
+  
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -269,34 +409,5 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-}
-
-/* === shadcn tokens (card/border/etc.) === */
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 4.9% 83.9%;
-
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
   }
 }

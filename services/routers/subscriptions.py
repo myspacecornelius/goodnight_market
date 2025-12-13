@@ -5,7 +5,7 @@ from typing import List
 import uuid
 
 from services import models, schemas
-from services.core.database import get_db
+from services.database import get_db
 from services.core.auth import get_current_user
 
 router = APIRouter(

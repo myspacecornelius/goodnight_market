@@ -1,7 +1,12 @@
-import { Menu, Search } from 'lucide-react'
+/**
+ * Elegant Topbar
+ * Floating topbar with refined search and user controls
+ */
+
+import { Menu, Search, Bell } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 import WalletDrawer from '@/components/hyperlocal/WalletDrawer'
-import { Stack } from '@/components/layout/Stack'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/Button'
 import {
@@ -27,53 +32,104 @@ export const Topbar = () => {
     .join('')
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
-      <Button variant="outline" size="icon" className="md:hidden" onClick={toggleSidebar}>
-        <Menu className="h-5 w-5" />
-        <span className="sr-only">Toggle navigation menu</span>
-      </Button>
-      <Stack className="w-full flex-1">
-        <form>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full appearance-none rounded-lg bg-transparent pl-8 shadow-none md:w-2/3 lg:w-1/3"
-            />
-          </div>
-        </form>
-      </Stack>
-      <WalletDrawer />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <Avatar>
-              <AvatarImage src={user?.avatar_url} alt={user?.username} />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <span className="sr-only">Toggle user menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">{user?.display_name || user?.username || 'Member'}</span>
-              <span className="text-xs text-muted-foreground">{user?.email}</span>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => logout()}
-            className="text-destructive focus:text-destructive"
+    <motion.header
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className="flex h-16 items-center justify-between gap-4 border-b border-elegant-200 bg-surface/95 backdrop-blur-sm px-6 sticky top-0 z-50"
+    >
+      {/* Left Side - Menu & Search */}
+      <div className="flex items-center gap-4 flex-1">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden hover:bg-elegant-100" 
+          onClick={toggleSidebar}
+        >
+          <Menu className="h-5 w-5 text-elegant-700" />
+          <span className="sr-only">Toggle navigation menu</span>
+        </Button>
+
+        {/* Elegant Search */}
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-elegant-500" />
+          <Input
+            type="search"
+            placeholder="Search Dharma..."
+            className="w-full pl-10 pr-4 py-2 bg-elegant-50 border-elegant-200 rounded-lg text-sm focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all duration-200"
+          />
+        </div>
+      </div>
+
+      {/* Right Side - Actions & User */}
+      <div className="flex items-center gap-3">
+        {/* LACES Wallet */}
+        <WalletDrawer />
+
+        {/* Notifications */}
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative hover:bg-elegant-100 rounded-full"
           >
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </header>
+            <Bell className="h-5 w-5 text-elegant-700" />
+            {/* Notification Badge */}
+            <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+        </motion.div>
+
+        {/* User Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 rounded-full hover:bg-elegant-100 p-1 pr-3 transition-colors duration-200"
+            >
+              <Avatar className="h-8 w-8 border-2 border-elegant-200">
+                <AvatarImage src={user?.avatar_url} alt={user?.username} />
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white text-xs font-semibold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden md:block text-sm font-medium text-elegant-900">
+                {user?.display_name || user?.username || 'Member'}
+              </span>
+            </motion.button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <span className="text-sm font-semibold text-elegant-900">
+                  {user?.display_name || user?.username || 'Member'}
+                </span>
+                <span className="text-xs text-elegant-500">
+                  {user?.email || 'member@dharma.com'}
+                </span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer">
+              <span className="text-sm">Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <span className="text-sm">Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <span className="text-sm">LACES Balance</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={() => logout()}
+              className="text-red-600 focus:text-red-700 focus:bg-red-50 cursor-pointer"
+            >
+              <span className="text-sm font-medium">Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </motion.header>
   )
 }

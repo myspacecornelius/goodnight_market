@@ -1,107 +1,111 @@
-import React, { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useMemo, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { 
-  MapPin, 
-  Plus, 
-  Users, 
-  Clock, 
-  Target, 
-  Calendar, 
-  CheckCircle, 
-  AlertCircle, 
-  Map,
+import {
+  CheckCircle,
+  Filter,
+  MapPin,
   Navigation,
+  Plus,
+  Search,
+  Target,
   Trophy,
-  Share2
+  Users,
 } from 'lucide-react';
-import { Dropzones } from '@/lib/api-experiments';
 
-interface DropZone {
-  id: string;
-  name: string;
-  description?: string;
-  owner_id: string;
-  center_lat: number;
-  center_lng: number;
-  radius_meters: number;
-  status: 'scheduled' | 'active' | 'ended' | 'cancelled';
-  starts_at?: string;
-  ends_at?: string;
-  member_count: number;
-  check_in_count: number;
-  created_at: string;
+import type { DropZone, DropZoneCreate, DropZoneDetails, DropZoneStatus } from '@/types/dropzones';
+import {
+  useCheckInToDropZone,
+  useCreateDropZone,
+  useDropZoneDetails,
+  useDropZones,
+  useJoinDropZone,
+} from '@/hooks/useDropZones';
+
+type StatusFilter = 'all' | DropZoneStatus;
+
+function formatDateTime(iso?: string) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
 }
 
-interface DropZoneDetails extends DropZone {
-  check_in_radius: number;
-  rules?: string;
-  tags?: string[];
-  is_public: boolean;
-  stats: {
-    member_count: number;
-    total_checkins: number;
-    today_checkins: number;
-  };
-  recent_checkins: Array<{
-    id: string;
-    user_id: string;
-    message?: string;
-    streak_count: number;
-    points_earned: number;
-    checked_in_at: string;
-  }>;
+function haversineDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 export default function DropzonesPage() {
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showCheckInDialog, setShowCheckInDialog] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
   const [checkInLocation, setCheckInLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [checkInMessage, setCheckInMessage] = useState('');
-  
-  const [createForm, setCreateForm] = useState({
-    name: '',
-    description: '',
-    center_lat: 0,
-    center_lng: 0,
-    radius_meters: 100,
-    check_in_radius: 50,
-    starts_at: '',
-    ends_at: '',
-    rules: '',
-    tags: [] as string[],
-  });
 
-  const queryClient = useQueryClient();
+  const [createForm, setCreateForm] = useState<DropZoneCreate & { tagsText?: string }>(
+    () => ({
+      name: '',
+      description: '',
+      center_lat: 0,
+      center_lng: 0,
+      radius_meters: 100,
+      check_in_radius: 50,
+      rules: '',
+      tags: [],
+      tagsText: '',
+      is_public: true,
+    })
+  );
 
-  // Fetch drop zones list
-  const { data: dropzones, isLoading: zonesLoading } = useQuery<DropZone[]>({
-    queryKey: ['dropzones'],
-    queryFn: () => Dropzones.list({ active: true }),
-    refetchInterval: 60000, // Refetch every minute
-  });
+  const {
+    data: dropzones,
+    isLoading: zonesLoading,
+    isError: zonesIsError,
+    error: zonesError,
+    refetch: refetchZones,
+  } = useDropZones({ active: true });
 
-  // Fetch selected zone details
-  const { data: zoneDetails, isLoading: detailsLoading } = useQuery<DropZoneDetails>({
-    queryKey: ['dropzone', selectedZone],
-    queryFn: () => selectedZone ? Dropzones.get(selectedZone) : null,
-    enabled: !!selectedZone,
-  });
+  const {
+    data: zoneDetails,
+    isLoading: detailsLoading,
+    isError: detailsIsError,
+    error: detailsError,
+    refetch: refetchDetails,
+  } = useDropZoneDetails(selectedZoneId || '', { enabled: !!selectedZoneId });
 
-  // Create drop zone mutation
-  const createZoneMutation = useMutation({
-    mutationFn: (data: typeof createForm) => Dropzones.create(data),
-    onSuccess: (data) => {
-      toast.success('Drop zone created successfully!');
+  const createZone = useCreateDropZone({
+    onSuccess: () => {
       setShowCreateDialog(false);
       setCreateForm({
         name: '',
@@ -110,47 +114,27 @@ export default function DropzonesPage() {
         center_lng: 0,
         radius_meters: 100,
         check_in_radius: 50,
-        starts_at: '',
-        ends_at: '',
         rules: '',
         tags: [],
+        tagsText: '',
+        is_public: true,
       });
-      queryClient.invalidateQueries({ queryKey: ['dropzones'] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to create drop zone');
     },
   });
 
-  // Join zone mutation
-  const joinZoneMutation = useMutation({
-    mutationFn: (zoneId: string) => Dropzones.join(zoneId),
-    onSuccess: () => {
-      toast.success('Successfully joined drop zone!');
-      queryClient.invalidateQueries({ queryKey: ['dropzones'] });
-      queryClient.invalidateQueries({ queryKey: ['dropzone', selectedZone] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to join zone');
-    },
-  });
+  const joinZone = useJoinDropZone();
+  const checkIn = useCheckInToDropZone();
 
-  // Check-in mutation
-  const checkInMutation = useMutation({
-    mutationFn: ({ zoneId, data }: { zoneId: string; data: any }) => 
-      Dropzones.checkin(zoneId, data),
-    onSuccess: (data) => {
-      toast.success(data.message || 'Successfully checked in!');
-      setShowCheckInDialog(false);
-      setCheckInMessage('');
-      setCheckInLocation(null);
-      queryClient.invalidateQueries({ queryKey: ['dropzones'] });
-      queryClient.invalidateQueries({ queryKey: ['dropzone', selectedZone] });
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Check-in failed');
-    },
-  });
+  const filteredZones = useMemo(() => {
+    const list = dropzones ?? [];
+    const q = searchTerm.trim().toLowerCase();
+
+    return list.filter((z) => {
+      const matchesSearch = !q || z.name.toLowerCase().includes(q) || (z.description ?? '').toLowerCase().includes(q);
+      const matchesStatus = statusFilter === 'all' ? true : z.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [dropzones, searchTerm, statusFilter]);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -164,7 +148,7 @@ export default function DropzonesPage() {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        toast.success('Location acquired!');
+        toast.success('Location acquired');
       },
       (error) => {
         toast.error('Unable to get your location');
@@ -174,56 +158,55 @@ export default function DropzonesPage() {
     );
   };
 
-  const handleCheckIn = () => {
-    if (!selectedZone || !checkInLocation) {
+  const canCheckIn = (zone: DropZoneDetails) => {
+    if (!checkInLocation) return false;
+    const distance = haversineDistanceMeters(
+      checkInLocation.lat,
+      checkInLocation.lng,
+      zone.center_lat,
+      zone.center_lng
+    );
+    return distance <= zone.check_in_radius;
+  };
+
+  const onSubmitCreate = () => {
+    const tags = (createForm.tagsText || '')
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const payload: DropZoneCreate = {
+      name: createForm.name,
+      description: createForm.description || undefined,
+      center_lat: createForm.center_lat,
+      center_lng: createForm.center_lng,
+      radius_meters: createForm.radius_meters,
+      check_in_radius: createForm.check_in_radius,
+      rules: createForm.rules || undefined,
+      tags: tags.length ? tags : undefined,
+      is_public: createForm.is_public ?? true,
+    };
+
+    createZone.mutate(payload);
+  };
+
+  const onSubmitCheckIn = () => {
+    if (!selectedZoneId || !checkInLocation) {
       toast.error('Location required for check-in');
       return;
     }
 
-    checkInMutation.mutate({
-      zoneId: selectedZone,
+    checkIn.mutate({
+      dropzoneId: selectedZoneId,
       data: {
         lat: checkInLocation.lat,
         lng: checkInLocation.lng,
         message: checkInMessage || undefined,
       },
     });
-  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'scheduled': return 'bg-blue-500';
-      case 'ended': return 'bg-gray-500';
-      case 'cancelled': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    const R = 6371000; // Earth's radius in meters
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  const canCheckIn = (zone: DropZoneDetails) => {
-    if (!checkInLocation) return false;
-    const distance = calculateDistance(
-      checkInLocation.lat, 
-      checkInLocation.lng,
-      zone.center_lat, 
-      zone.center_lng
-    );
-    return distance <= zone.check_in_radius;
+    setShowCheckInDialog(false);
+    setCheckInMessage('');
   };
 
   if (zonesLoading) {
@@ -243,47 +226,69 @@ export default function DropzonesPage() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+  if (zonesIsError) {
+    return (
+      <div className="space-y-6">
         <div className="flex items-center gap-2">
           <MapPin className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Drop Zones</h1>
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Unable to load drop zones</CardTitle>
+            <CardDescription>{(zonesError as any)?.message ?? 'Unknown error'}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => refetchZones()}>Retry</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">Drop Zones</h1>
+          <Badge variant="secondary" className="ml-2">
+            {filteredZones.length}
+          </Badge>
+        </div>
+
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Zone
-            </Button>
+            <Button leftIcon={<Plus className="h-4 w-4" />}>Create Zone</Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Create Drop Zone</DialogTitle>
-              <DialogDescription>
-                Set up a new location-based gathering spot
-              </DialogDescription>
+              <DialogDescription>Set up a new location-based gathering spot.</DialogDescription>
             </DialogHeader>
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Zone Name</Label>
                 <Input
                   id="name"
                   value={createForm.name}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Coffee meetup, Park hangout..."
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="SoHo meetup, Newbury pickup..."
                 />
               </div>
+
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
-                  value={createForm.description}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="What's this zone about?"
+                  value={createForm.description ?? ''}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="What’s this zone about?"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor="lat">Latitude</Label>
@@ -292,7 +297,9 @@ export default function DropzonesPage() {
                     type="number"
                     step="0.000001"
                     value={createForm.center_lat}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, center_lat: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) =>
+                      setCreateForm((prev) => ({ ...prev, center_lat: parseFloat(e.target.value) || 0 }))
+                    }
                   />
                 </div>
                 <div>
@@ -302,18 +309,23 @@ export default function DropzonesPage() {
                     type="number"
                     step="0.000001"
                     value={createForm.center_lng}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, center_lng: parseFloat(e.target.value) || 0 }))}
+                    onChange={(e) =>
+                      setCreateForm((prev) => ({ ...prev, center_lng: parseFloat(e.target.value) || 0 }))
+                    }
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor="radius">Zone Radius (m)</Label>
                   <Input
                     id="radius"
                     type="number"
-                    value={createForm.radius_meters}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, radius_meters: parseInt(e.target.value) || 100 }))}
+                    value={createForm.radius_meters ?? 100}
+                    onChange={(e) =>
+                      setCreateForm((prev) => ({ ...prev, radius_meters: parseFloat(e.target.value) || 100 }))
+                    }
                   />
                 </div>
                 <div>
@@ -321,94 +333,135 @@ export default function DropzonesPage() {
                   <Input
                     id="checkin_radius"
                     type="number"
-                    value={createForm.check_in_radius}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, check_in_radius: parseInt(e.target.value) || 50 }))}
+                    value={createForm.check_in_radius ?? 50}
+                    onChange={(e) =>
+                      setCreateForm((prev) => ({ ...prev, check_in_radius: parseFloat(e.target.value) || 50 }))
+                    }
                   />
                 </div>
               </div>
+
+              <div>
+                <Label htmlFor="rules">Rules (optional)</Label>
+                <Textarea
+                  id="rules"
+                  value={createForm.rules ?? ''}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, rules: e.target.value }))}
+                  placeholder="No resellers. Be respectful."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={createForm.tagsText ?? ''}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, tagsText: e.target.value }))}
+                  placeholder="sneakers, meetup, retail"
+                />
+              </div>
             </div>
+
             <DialogFooter>
-              <Button 
-                onClick={() => createZoneMutation.mutate(createForm)}
-                disabled={createZoneMutation.isPending || !createForm.name}
+              <Button
+                onClick={onSubmitCreate}
+                loading={createZone.isPending}
+                disabled={!createForm.name || !createForm.center_lat || !createForm.center_lng}
               >
-                {createZoneMutation.isPending ? 'Creating...' : 'Create Zone'}
+                Create Zone
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Zone List */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {dropzones?.map((zone) => (
-          <Card key={zone.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-lg">{zone.name}</CardTitle>
-                <Badge className={`${getStatusColor(zone.status)} text-white text-xs`}>
-                  {zone.status}
-                </Badge>
-              </div>
-              {zone.description && (
-                <CardDescription>{zone.description}</CardDescription>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{zone.member_count} members</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Target className="h-4 w-4" />
-                  <span>{zone.check_in_count} check-ins</span>
-                </div>
-              </div>
-              
-              {zone.starts_at && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Starts: {formatDate(zone.starts_at)}</span>
-                </div>
-              )}
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search drop zones…"
+                className="pl-9"
+              />
+            </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <div className="text-xs text-muted-foreground">
-                  {zone.radius_meters}m radius
-                </div>
-                <Button 
-                  size="sm" 
-                  onClick={() => setSelectedZone(zone.id)}
-                >
-                  View Details
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              >
+                <option value="all">All statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="ENDED">Ended</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* No zones state */}
-      {dropzones?.length === 0 && (
-        <Card className="py-12">
-          <CardContent className="text-center">
-            <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No active drop zones</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Create the first drop zone to get people gathering!
-            </p>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Zone
-            </Button>
-          </CardContent>
-        </Card>
+      {/* List */}
+      {filteredZones.length === 0 ? (
+        <EmptyState
+          title="No drop zones found"
+          description="Try clearing filters, or create the first zone in your area."
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredZones.map((zone: DropZone) => (
+            <Card key={zone.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg">{zone.name}</CardTitle>
+                    {zone.description ? (
+                      <CardDescription className="mt-1 line-clamp-2">{zone.description}</CardDescription>
+                    ) : null}
+                  </div>
+                  <Badge variant={zone.status === 'ACTIVE' ? 'accent' : 'outline'}>{zone.status}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>{zone.member_count} members</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Target className="h-4 w-4" />
+                    <span>{zone.check_in_count} check-ins</span>
+                  </div>
+                </div>
+
+                {(zone.starts_at || zone.ends_at) && (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    {zone.starts_at ? <div>Starts: {formatDateTime(zone.starts_at)}</div> : null}
+                    {zone.ends_at ? <div>Ends: {formatDateTime(zone.ends_at)}</div> : null}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="text-xs text-muted-foreground">{zone.radius_meters}m radius</div>
+                  <Button size="sm" onClick={() => setSelectedZoneId(zone.id)}>
+                    View Details
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
-      {/* Zone Details Modal */}
-      {selectedZone && (
-        <Dialog open={!!selectedZone} onOpenChange={() => setSelectedZone(null)}>
+      {/* Details */}
+      {selectedZoneId && (
+        <Dialog open={!!selectedZoneId} onOpenChange={() => setSelectedZoneId(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             {detailsLoading ? (
               <div className="space-y-4">
@@ -416,106 +469,107 @@ export default function DropzonesPage() {
                 <Skeleton className="h-32 w-full" />
                 <Skeleton className="h-24 w-full" />
               </div>
-            ) : zoneDetails && (
+            ) : detailsIsError ? (
+              <div className="space-y-4">
+                <DialogHeader>
+                  <DialogTitle>Unable to load zone details</DialogTitle>
+                  <DialogDescription>{(detailsError as any)?.message ?? 'Unknown error'}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => refetchDetails()}>
+                    Retry
+                  </Button>
+                </DialogFooter>
+              </div>
+            ) : zoneDetails ? (
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     {zoneDetails.name}
-                    <Badge className={`${getStatusColor(zoneDetails.status)} text-white`}>
-                      {zoneDetails.status}
-                    </Badge>
+                    <Badge variant={zoneDetails.status === 'ACTIVE' ? 'accent' : 'outline'}>{zoneDetails.status}</Badge>
                   </DialogTitle>
-                  {zoneDetails.description && (
-                    <DialogDescription>{zoneDetails.description}</DialogDescription>
-                  )}
+                  {zoneDetails.description ? <DialogDescription>{zoneDetails.description}</DialogDescription> : null}
                 </DialogHeader>
 
                 <div className="space-y-6">
-                  {/* Stats */}
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <div className="text-2xl font-bold text-blue-600">{zoneDetails.stats.member_count}</div>
+                      <div className="text-2xl font-bold">{zoneDetails.stats.member_count}</div>
                       <div className="text-sm text-muted-foreground">Members</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-green-600">{zoneDetails.stats.total_checkins}</div>
+                      <div className="text-2xl font-bold">{zoneDetails.stats.total_checkins}</div>
                       <div className="text-sm text-muted-foreground">Total Check-ins</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-orange-600">{zoneDetails.stats.today_checkins}</div>
+                      <div className="text-2xl font-bold">{zoneDetails.stats.today_checkins}</div>
                       <div className="text-sm text-muted-foreground">Today</div>
                     </div>
                   </div>
 
-                  {/* Location Info */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <strong>Location:</strong> {zoneDetails.center_lat.toFixed(4)}, {zoneDetails.center_lng.toFixed(4)}
+                      <strong>Center:</strong> {zoneDetails.center_lat.toFixed(4)}, {zoneDetails.center_lng.toFixed(4)}
                     </div>
                     <div>
                       <strong>Check-in Radius:</strong> {zoneDetails.check_in_radius}m
                     </div>
                   </div>
 
-                  {/* Rules */}
-                  {zoneDetails.rules && (
+                  {zoneDetails.rules ? (
                     <div>
                       <h4 className="font-semibold mb-2">Rules & Guidelines</h4>
                       <p className="text-sm bg-muted p-3 rounded">{zoneDetails.rules}</p>
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Tags */}
-                  {zoneDetails.tags && zoneDetails.tags.length > 0 && (
+                  {zoneDetails.tags?.length ? (
                     <div>
                       <h4 className="font-semibold mb-2">Tags</h4>
                       <div className="flex flex-wrap gap-2">
-                        {zoneDetails.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline">{tag}</Badge>
+                        {zoneDetails.tags.map((tag) => (
+                          <Badge key={tag} variant="outline">
+                            {tag}
+                          </Badge>
                         ))}
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Recent Check-ins */}
-                  {zoneDetails.recent_checkins.length > 0 && (
+                  {zoneDetails.recent_checkins?.length ? (
                     <div>
                       <h4 className="font-semibold mb-2">Recent Check-ins</h4>
-                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
                         {zoneDetails.recent_checkins.map((checkin) => (
                           <div key={checkin.id} className="flex items-center justify-between p-2 border rounded">
                             <div className="flex-1">
-                              {checkin.message && <p className="text-sm">{checkin.message}</p>}
-                              <div className="text-xs text-muted-foreground">
-                                {formatDate(checkin.checked_in_at)}
-                              </div>
+                              {checkin.message ? <p className="text-sm">{checkin.message}</p> : null}
+                              <div className="text-xs text-muted-foreground">{formatDateTime(checkin.checked_in_at)}</div>
                             </div>
                             <div className="flex items-center gap-2 text-xs">
                               <Badge variant="secondary">
                                 <Trophy className="h-3 w-3 mr-1" />
                                 {checkin.streak_count}
                               </Badge>
-                              <Badge variant="outline">
-                                +{checkin.points_earned}
-                              </Badge>
+                              <Badge variant="outline">+{checkin.points_earned}</Badge>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <DialogFooter className="flex gap-2">
                   <Button
                     variant="outline"
-                    onClick={() => joinZoneMutation.mutate(selectedZone)}
-                    disabled={joinZoneMutation.isPending}
+                    onClick={() => joinZone.mutate(selectedZoneId)}
+                    loading={joinZone.isPending}
                   >
                     <Users className="h-4 w-4 mr-2" />
-                    {joinZoneMutation.isPending ? 'Joining...' : 'Join Zone'}
+                    Join Zone
                   </Button>
-                  
+
                   <Dialog open={showCheckInDialog} onOpenChange={setShowCheckInDialog}>
                     <DialogTrigger asChild>
                       <Button onClick={getCurrentLocation}>
@@ -525,53 +579,52 @@ export default function DropzonesPage() {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Check In to Zone</DialogTitle>
+                        <DialogTitle>Check In</DialogTitle>
                         <DialogDescription>
-                          Verify your location and check in to earn points and maintain your streak
+                          We’ll verify your distance to the zone before sending the check-in.
                         </DialogDescription>
                       </DialogHeader>
+
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
                           <Navigation className="h-5 w-5" />
                           <span className="text-sm">
                             {checkInLocation ? (
-                              <span className="text-green-600">
-                                Location acquired ✓ 
-                                {canCheckIn(zoneDetails) ? 
-                                  ' (Within check-in range)' : 
-                                  ' (Too far from zone)'
-                                }
+                              <span className={canCheckIn(zoneDetails) ? 'text-green-600' : 'text-red-600'}>
+                                Location acquired ✓ {canCheckIn(zoneDetails) ? '(within range)' : '(too far)'}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">Getting location...</span>
+                              <span className="text-muted-foreground">Getting location…</span>
                             )}
                           </span>
                         </div>
-                        
+
                         <div>
                           <Label htmlFor="checkin-message">Message (optional)</Label>
                           <Textarea
                             id="checkin-message"
                             value={checkInMessage}
                             onChange={(e) => setCheckInMessage(e.target.value)}
-                            placeholder="Share what you're up to..."
+                            placeholder="Share what you’re up to…"
                             maxLength={200}
                           />
                         </div>
                       </div>
+
                       <DialogFooter>
-                        <Button 
-                          onClick={handleCheckIn}
-                          disabled={checkInMutation.isPending || !checkInLocation || !canCheckIn(zoneDetails)}
+                        <Button
+                          onClick={onSubmitCheckIn}
+                          loading={checkIn.isPending}
+                          disabled={!checkInLocation || !canCheckIn(zoneDetails)}
                         >
-                          {checkInMutation.isPending ? 'Checking In...' : 'Check In'}
+                          Check In
                         </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
                 </DialogFooter>
               </>
-            )}
+            ) : null}
           </DialogContent>
         </Dialog>
       )}

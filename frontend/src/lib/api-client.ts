@@ -75,6 +75,29 @@ import type {
   JoinDropZoneResponse,
 } from '../types/dropzones';
 
+// Import Signals types
+import type {
+  Signal,
+  SignalCreate,
+  SignalList,
+  ListSignalsParams,
+  SignalHeatmap,
+  HeatmapParams,
+  SignalStats,
+  BoostSignalResponse,
+} from '../types/signals';
+
+// Import Listings types
+import type {
+  ListingCreate,
+  ListingUpdate,
+  ListingResponse,
+  PriceDropRequest,
+  PriceDropResponse,
+  MarkSoldResponse,
+  SaveResponse,
+} from '../types/listings';
+
 // ============================================
 // MARKETPLACE / FEED V2 TYPES
 // ============================================
@@ -551,6 +574,58 @@ class ApiClient {
     return response.data;
   }
 
+  // ============================================
+  // ENHANCED SIGNALS
+  // ============================================
+
+  /**
+   * Create a new signal
+   * @param data - Signal data including location, type, and content
+   */
+  async createSignal(data: SignalCreate): Promise<Signal> {
+    const response = await this.client.post<Signal>('/signals/', data);
+    return response.data;
+  }
+
+  /**
+   * List signals with filtering and pagination
+   * @param params - Filtering options (bbox, city, signal_type, etc.)
+   */
+  async listSignals(params: ListSignalsParams = {}): Promise<SignalList> {
+    const response = await this.client.get<SignalList>('/signals/', { params });
+    return response.data;
+  }
+
+  /**
+   * Get signal heatmap data
+   * Shows aggregated signals in geohash buckets
+   * @param params - Bounding box, zoom level, time window
+   */
+  async getSignalHeatmap(params: HeatmapParams = {}): Promise<SignalHeatmap> {
+    const response = await this.client.get<SignalHeatmap>('/signals/heatmap', { params });
+    return response.data;
+  }
+
+  /**
+   * Get signal statistics
+   * @param timeWindow - Time window for stats (1h, 24h, 7d)
+   */
+  async getSignalStats(timeWindow: string = '24h'): Promise<SignalStats> {
+    const response = await this.client.get<SignalStats>('/signals/stats', {
+      params: { time_window: timeWindow }
+    });
+    return response.data;
+  }
+
+  /**
+   * Boost a signal (like/upvote)
+   * @param signalId - ID of the signal to boost
+   */
+  async boostSignal(signalId: string): Promise<BoostSignalResponse> {
+    const response = await this.client.post<BoostSignalResponse>(`/signals/${signalId}/boost`);
+    return response.data;
+  }
+
   // Release methods
   async getReleases(skip: number = 0, limit: number = 50) {
     const response = await this.client.get('/releases/', {
@@ -634,12 +709,62 @@ class ApiClient {
     return response.data;
   }
 
-  async saveListing(listingId: string): Promise<void> {
-    await this.client.post(`/v2/listings/${listingId}/save`);
+  async saveListing(listingId: string): Promise<SaveResponse> {
+    const response = await this.client.post<SaveResponse>(`/v2/listings/${listingId}/save`);
+    return response.data;
   }
 
   async unsaveListing(listingId: string): Promise<void> {
     await this.client.delete(`/v2/listings/${listingId}/save`);
+  }
+
+  /**
+   * Create a new marketplace listing
+   * @param data - Listing creation data
+   */
+  async createListing(data: ListingCreate): Promise<ListingResponse> {
+    const response = await this.client.post<ListingResponse>('/v2/listings', data);
+    return response.data;
+  }
+
+  /**
+   * Update an existing listing
+   * @param listingId - ID of the listing to update
+   * @param data - Updated listing data
+   */
+  async updateListing(listingId: string, data: ListingUpdate): Promise<ListingResponse> {
+    const response = await this.client.put<ListingResponse>(`/v2/listings/${listingId}`, data);
+    return response.data;
+  }
+
+  /**
+   * Drop the price of a listing
+   * @param listingId - ID of the listing
+   * @param data - New price information
+   */
+  async dropListingPrice(listingId: string, data: PriceDropRequest): Promise<PriceDropResponse> {
+    const response = await this.client.post<PriceDropResponse>(
+      `/v2/listings/${listingId}/price-drop`,
+      data
+    );
+    return response.data;
+  }
+
+  /**
+   * Mark a listing as sold
+   * @param listingId - ID of the listing
+   */
+  async markListingSold(listingId: string): Promise<MarkSoldResponse> {
+    const response = await this.client.post<MarkSoldResponse>(`/v2/listings/${listingId}/sold`);
+    return response.data;
+  }
+
+  /**
+   * Delete a listing
+   * @param listingId - ID of the listing to delete
+   */
+  async deleteListing(listingId: string): Promise<void> {
+    await this.client.delete(`/v2/listings/${listingId}`);
   }
 
   // Health check
