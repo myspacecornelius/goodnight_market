@@ -347,20 +347,87 @@ class ApiClient {
     formData.set('password', password);
     formData.set('grant_type', 'password');
 
-    const response = await this.client.post<AuthTokens>('/auth/token', formData, {
-      headers: {
-        // Override default JSON header so FastAPI treats this as form data
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
+    try {
+      const response = await this.client.post<AuthTokens>('/auth/token', formData, {
+        headers: {
+          // Override default JSON header so FastAPI treats this as form data
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
 
-    this.setAuthToken(response.data.access_token);
-    return response.data;
+      this.setAuthToken(response.data.access_token);
+      return response.data;
+    } catch (error: any) {
+      // Enhanced error handling for common login issues
+      if (error.response?.status === 401) {
+        throw new Error('Invalid username or password');
+      } else if (error.response?.status === 429) {
+        throw new Error('Too many login attempts. Please try again later.');
+      } else if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        // Handle backend not running
+        console.warn('Backend service not available. Using mock login for development.');
+
+        // For demo purposes, allow login with known demo credentials
+        const demoCredentials = [
+          { username: 'boston_kicks_og', password: 'dharma2024' },
+          { username: 'nyc_heat_hunter', password: 'dharma2024' },
+          { username: 'la_streetwear_king', password: 'dharma2024' },
+          { username: 'dharma2024', password: 'dharma2024' }
+        ];
+
+        const isDemoUser = demoCredentials.some(
+          cred => cred.username === username && cred.password === password
+        );
+
+        if (isDemoUser) {
+          // Create a mock token for development
+          const mockToken = {
+            access_token: 'mock_access_token_for_' + username,
+            token_type: 'bearer',
+            expires_in: 3600
+          };
+
+          this.setAuthToken(mockToken.access_token);
+          return mockToken;
+        } else {
+          throw new Error('Backend service not available. Please use demo credentials or start the backend service.');
+        }
+      } else {
+        throw new Error('Login failed. Please try again.');
+      }
+    }
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await this.client.get<User>('/auth/me');
-    return response.data;
+    try {
+      const response = await this.client.get<User>('/auth/me');
+      return response.data;
+    } catch (error: any) {
+      // Handle backend not running - return mock user data for development
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        console.warn('Backend service not available. Using mock user data for development.');
+
+        const token = this.getAuthToken();
+        if (token && token.startsWith('mock_access_token_for_')) {
+          const username = token.replace('mock_access_token_for_', '');
+          return {
+            user_id: 'mock_user_id_' + username,
+            username: username,
+            display_name: username.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            email: username + '@dharma.community',
+            avatar_url: `https://images.unsplash.com/photo-1500000000?w=400`,
+            bio: 'Sneaker enthusiast and Dharma community member',
+            location: 'Boston, MA',
+            laces_balance: 1000,
+            is_verified: true,
+            created_at: new Date().toISOString()
+          };
+        }
+      }
+      throw error;
+    }
   }
 
   // Post methods
