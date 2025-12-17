@@ -1,9 +1,27 @@
 import uuid
+from enum import Enum as PyEnum
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, Text, Index, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from services.database import Base
+
+
+class TransactionType(PyEnum):
+    DAILY_STIPEND = "DAILY_STIPEND"
+    BOOST_SENT = "BOOST_SENT"
+    BOOST_RECEIVED = "BOOST_RECEIVED"
+    SIGNAL_REWARD = "SIGNAL_REWARD"
+    ADMIN_ADD = "ADMIN_ADD"
+    ADMIN_REMOVE = "ADMIN_REMOVE"
+    PURCHASE = "PURCHASE"
+    REFUND = "REFUND"
+    CONTEST_REWARD = "CONTEST_REWARD"
+    CHECKOUT_TASK_PURCHASE = "CHECKOUT_TASK_PURCHASE"
+    CHECKOUT_TASK_REFUND = "CHECKOUT_TASK_REFUND"
+    POST_REWARD = "POST_REWARD"
+    CHECKIN_REWARD = "CHECKIN_REWARD"
+
 
 class LacesLedger(Base):
     __tablename__ = 'laces_ledger'
@@ -12,9 +30,7 @@ class LacesLedger(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id', ondelete="CASCADE"), nullable=False, index=True)
     amount = Column(Integer, nullable=False)
     transaction_type = Column(
-        Enum('DAILY_STIPEND', 'BOOST_SENT', 'BOOST_RECEIVED', 'SIGNAL_REWARD', 'ADMIN_ADD', 'ADMIN_REMOVE',
-             'PURCHASE', 'REFUND', 'CONTEST_REWARD', 'CHECKOUT_TASK_PURCHASE', 'CHECKOUT_TASK_REFUND',
-             'POST_REWARD', 'CHECKIN_REWARD', name='transaction_type_enum'),
+        Enum(*(t.value for t in TransactionType), name='transaction_type_enum'),
         nullable=False
     )
     related_post_id = Column(UUID(as_uuid=True), ForeignKey('posts.post_id', ondelete="SET NULL"), nullable=True)

@@ -366,6 +366,13 @@ class ApiClient {
     return response.data;
   }
 
+  async getHeatMap(lat: number, lng: number, radius: number = 3.0): Promise<any> {
+    const response = await this.client.get<any>('/v2/feed/heat-index/map', {
+      params: { lat, lng, radius },
+    });
+    return response.data;
+  }
+
   async getActivityRibbon(lat: number, lng: number, radius: number = 3.0): Promise<ActivityRibbonResponse> {
     const response = await this.client.get<ActivityRibbonResponse>('/v2/feed/activity-ribbon', {
       params: { lat, lng, radius },
@@ -397,6 +404,11 @@ class ApiClient {
 
   async unsaveListing(listingId: string): Promise<void> {
     await this.client.delete(`/v2/listings/${listingId}/save`);
+  }
+
+  async createListing(data: any): Promise<Listing> {
+    const response = await this.client.post<Listing>('/v2/listings', data);
+    return response.data;
   }
 
   // Health check

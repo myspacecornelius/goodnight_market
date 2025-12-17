@@ -3,6 +3,8 @@ import { MapPin, Search, Flame, RefreshCw } from 'lucide-react';
 import { apiClient, type Listing, type HyperlocalFeedResponse, type ActivityRibbonItem } from '@/lib/api-client';
 import { ListingCard } from '@/components/marketplace/ListingCard';
 import { ActivityRibbon } from '@/components/marketplace/ActivityRibbon';
+import { ListingDetailModal } from '@/components/marketplace/ListingDetailModal';
+import { CreateListingModal } from '@/components/marketplace/CreateListingModal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +63,8 @@ export function MarketplacePage() {
   // Feed metadata
   const [totalCount, setTotalCount] = useState(0);
   const [heatLevel, setHeatLevel] = useState<string>('cold');
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   // Fetch listings
   const fetchListings = useCallback(async () => {
@@ -134,8 +138,7 @@ export function MarketplacePage() {
   });
 
   const handleListingClick = (listing: Listing) => {
-    // TODO: Open listing detail modal/page
-    console.log('Listing clicked:', listing.id);
+    setSelectedListing(listing);
   };
 
   const handleSaveListing = async (listingId: string) => {
@@ -161,13 +164,13 @@ export function MarketplacePage() {
           </button>
           
           <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setIsCreateOpen(true)} className="h-7 text-xs px-2 bg-primary/90">
+              + Sell / Trade
+            </Button>
             <Badge className={cn('flex items-center gap-1', heatLevelColors[heatLevel])}>
               <Flame className="h-3 w-3" />
               {heatLevel.charAt(0).toUpperCase() + heatLevel.slice(1)}
             </Badge>
-            <span className="text-xs text-muted-foreground">
-              {totalCount} listings
-            </span>
           </div>
         </div>
 
@@ -295,6 +298,25 @@ export function MarketplacePage() {
           ))}
         </div>
       )}
+
+      {/* Detail Modal */}
+      <ListingDetailModal
+        listing={selectedListing}
+        isOpen={!!selectedListing}
+        onClose={() => setSelectedListing(null)}
+        onSave={handleSaveListing}
+        onContact={(id) => console.log('Contact seller:', id)}
+      />
+
+      {/* Create Listing Modal */}
+      <CreateListingModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSuccess={() => {
+          fetchListings(); // Refresh feed
+          fetchActivity();
+        }}
+      />
     </div>
   );
 }

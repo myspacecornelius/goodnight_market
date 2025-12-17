@@ -7,6 +7,8 @@ import { Progress } from '../components/ui/progress';
 import AnimatedButton from '../components/ui/animated-button';
 import { useStaggeredIntersection } from '../hooks/useIntersectionObserver';
 import { useLacesUpdates } from '../components/WebSocketProvider';
+import { LacesAPI, type LacesBalance as APILacesBalance, type LacesLedger, type Opportunities } from '@/lib/api/laces';
+import { toast } from 'sonner';
 
 interface LacesBalance {
   total: number;
@@ -28,44 +30,82 @@ interface Transaction {
 
 export default function Laces() {
   const [balance, setBalance] = useState<LacesBalance>({
-    total: 2847,
-    earned_today: 156,
-    pending: 24,
-    rank: 42,
-    percentile: 15
+    total: 0,
+    earned_today: 0,
+    pending: 0,
+    rank: 0,
+    percentile: 0
   });
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      type: 'earned',
-      amount: 25,
-      description: 'Signal posted in Downtown LA',
-      timestamp: '2 minutes ago'
-    },
-    {
-      id: '2', 
-      type: 'earned',
-      amount: 50,
-      description: 'Community boost reward',
-      timestamp: '1 hour ago'
-    },
-    {
-      id: '3',
-      type: 'transferred',
-      amount: 100,
-      description: 'Sent to @sneaker_scout',
-      timestamp: '3 hours ago',
-      to: 'sneaker_scout'
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [opportunities, setOpportunities] = useState<Opportunities | null>(null);
+
+  const { setRef } = useStaggeredIntersection(6);
+
+  // Fetch initial data
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [balanceData, ledgerData, oppsData] = await Promise.all([
+        LacesAPI.getBalance(),
+        LacesAPI.getLedger({ limit: 10 }),
+        LacesAPI.getOpportunities()
+      ]);
+
+      setBalance({
+        total: balanceData.balance,
+        earned_today: oppsData.posts_today * 25 + oppsData.checkins_today * 50, // Estimate based on activity
+        pending: 0, // Placeholder
+        rank: 42, // Placeholder until leaderboard API
+        percentile: 15 // Placeholder
+      });
+
+      setTransactions(ledgerData.transactions.map(t => ({
+        id: t.id,
+        type: t.amount > 0 ? 'earned' : 'spent',
+        amount: Math.abs(t.amount),
+        description: t.description || t.transaction_type,
+        timestamp: new Date(t.created_at).toLocaleString()
+      })));
+
+      setOpportunities(oppsData);
+    } catch (error) {
+      console.error('Failed to fetch LACES data:', error);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
 
-  const { setRef, isIntersecting } = useStaggeredIntersection(6);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  useLacesUpdates((transaction) => {
+  const handleClaimStipend = async () => {
+    try {
+      setIsClaiming(true);
+      const result = await LacesAPI.claimStipend();
+      toast.success(result.message);
+      fetchData(); // Refresh data
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to claim stipend');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
+  useLacesUpdates((transaction: any) => {
     // Add new transaction to the list
-    setTransactions(prev => [transaction, ...prev.slice(0, 9)]);
+    setTransactions(prev => [{
+      id: transaction.id,
+      type: transaction.amount > 0 ? 'earned' : 'spent',
+      amount: Math.abs(transaction.amount),
+      description: transaction.description || transaction.transaction_type,
+      timestamp: new Date().toLocaleString()
+    }, ...prev.slice(0, 9)]);
+    
     // Update balance
-    if (transaction.type === 'earned') {
+    if (transaction.amount > 0) {
       setBalance(prev => ({
         ...prev,
         total: prev.total + transaction.amount,
@@ -151,9 +191,16 @@ export default function Laces() {
               </div>
             </div>
             
-            <AnimatedButton variant="earth" size="sm" className="magnetic">
+            <AnimatedButton 
+              variant="earth" 
+              size="sm" 
+              className="magnetic"
+              onClick={handleClaimStipend}
+              disabled={isClaiming || (opportunities?.daily_stipend_claimed ?? true)}
+            >
               <Gift className="w-4 h-4" />
-              Claim Daily
+              {isClaiming ? 'Claiming...' : 
+               opportunities?.daily_stipend_claimed ? 'Claimed' : 'Claim Daily'}
             </AnimatedButton>
           </motion.div>
         </div>

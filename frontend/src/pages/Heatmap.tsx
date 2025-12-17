@@ -1,13 +1,15 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { MapPin, Flame, Clock, Users, Filter, Zap, Navigation, CheckCircle, Timer } from "lucide-react"
-import { HeatMap, mockHeatMapData, mockDropZones, HeatMapBin, DropZone } from "@/components/dharma/HeatMap"
+import { HeatMap, mockHeatMapData, mockDropZones, type HeatMapBin, type DropZone } from "@/components/dharma/HeatMap"
+import { DropZonesAPI } from "@/lib/api/dropzones"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/Button"
 import { LacesDisplay } from "@/components/dharma/LacesDisplay"
 import { cn } from "@/lib/utils"
-import { LatLngExpression } from "leaflet"
-import { MapBounds } from "@/components/map/BaseMap"
+import type { LatLngExpression } from "leaflet"
+import type { MapBounds } from "@/components/map/BaseMap"
+import { apiClient } from "@/lib/api-client"
 
 interface QuickStat {
   label: string
@@ -61,6 +63,8 @@ export default function Heatmap() {
   const [isLoading, setIsLoading] = React.useState(false)
   const [selectedHeatTile, setSelectedHeatTile] = React.useState<HeatMapBin | null>(null)
   const [selectedDropZone, setSelectedDropZone] = React.useState<DropZone | null>(null)
+  const [heatMapData, setHeatMapData] = React.useState<any>(mockHeatMapData)
+  const [activeDropZones, setActiveDropZones] = React.useState<any>(mockDropZones)
   
   const filters = [
     { id: "all", label: "All Activity", icon: Zap },
@@ -75,12 +79,66 @@ export default function Heatmap() {
     { id: "7d" as const, label: "7 Days", icon: Clock }
   ]
   
+  // Fetch real heatmap data
+  const fetchHeatMap = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // Use center coordinates
+      const lat = Array.isArray(mapCenter) ? mapCenter[0] : mapCenter.lat;
+      const lng = Array.isArray(mapCenter) ? mapCenter[1] : mapCenter.lng;
+      
+      // Fetch Heatmap Data
+      const heatData = await apiClient.getHeatMap(lat, lng, 3.0); // 3 mile radius
+      
+      // Fetch Active Drop Zones
+      try {
+        const zones = await DropZonesAPI.list({ active: true, limit: 20 });
+        if (zones && zones.length > 0) {
+          setActiveDropZones(zones.map(z => ({
+            ...z,
+            status: z.status as any, // Cast status string to enum
+            is_member: false // Default
+          })));
+        }
+      } catch (e) {
+        console.warn("Failed to fetch drop zones, using mock data", e);
+      }
+      
+      // Transform GeoJSON features to bins format expected by HeatMapOverlay
+      if (heatData && heatData.features) {
+        const bins = heatData.features.map((f: any) => ({
+          geohash: f.properties.h3_index,
+          lat: f.geometry.coordinates[0][0][1], // Approximate center from polygon
+          lng: f.geometry.coordinates[0][0][0],
+          signal_count: f.properties.metrics.signal_count || 0,
+          post_count: f.properties.metrics.post_count || 0,
+          boost_score: f.properties.heat_score || 0,
+          top_brands: f.properties.trending?.brands || [],
+          top_tags: [],
+          sample_posts: []
+        }));
+        
+        setHeatMapData({
+          bins,
+          total_posts: 0,
+          time_window: timeWindow
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch heatmap data", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mapCenter, timeWindow]);
+
+  React.useEffect(() => {
+    fetchHeatMap();
+  }, [fetchHeatMap]);
+
   // Handler functions for map interactions
   const handleMapMove = React.useCallback((center: LatLngExpression, zoom: number, bounds: MapBounds) => {
     setMapCenter(center)
     setMapZoom(zoom)
-    // In Phase B, this will trigger new data fetching based on bounds
-    console.log("Map moved:", { center, zoom, bounds })
   }, [])
 
   const handleHeatTileClick = React.useCallback((bin: HeatMapBin) => {
@@ -93,22 +151,29 @@ export default function Heatmap() {
     console.log("Drop zone clicked:", zone)
   }, [])
 
-  const handleDropZoneCheckIn = React.useCallback((zoneId: string, lat: number, lng: number) => {
-    console.log("Check-in requested:", { zoneId, lat, lng })
-    // Simulate check-in process
-    setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      // In Phase B, this will be a real API call
-      alert(`Successfully checked into zone ${zoneId}!`)
-    }, 2000)
-  }, [])
+  const handleDropZoneCheckIn = React.useCallback(async (zoneId: string, lat: number, lng: number) => {
+    try {
+      setIsLoading(true);
+      const response = await DropZonesAPI.checkIn(zoneId, { lat, lng });
+      alert(`Checked in! Streak: ${response.streak_count} days. Earned ${response.points_earned} pts.`);
+      // Refresh to update stats
+      fetchHeatMap();
+    } catch (err: any) {
+      alert(`Check-in failed: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchHeatMap])
 
-  const handleDropZoneJoin = React.useCallback((zoneId: string) => {
-    console.log("Join zone requested:", zoneId)
-    // In Phase B, this will be a real API call
-    alert(`Joined zone ${zoneId}!`)
-  }, [])
+  const handleDropZoneJoin = React.useCallback(async (zoneId: string) => {
+    try {
+      await DropZonesAPI.join(zoneId);
+      alert(`Successfully joined zone!`);
+      fetchHeatMap();
+    } catch (err: any) {
+      alert(`Failed to join: ${err.message}`);
+    }
+  }, [fetchHeatMap])
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -237,8 +302,8 @@ export default function Heatmap() {
           </CardHeader>
           <CardContent className="p-0">
             <HeatMap 
-              heatMapData={mockHeatMapData}
-              dropZones={mockDropZones}
+              heatMapData={heatMapData}
+              dropZones={activeDropZones}
               center={mapCenter}
               zoom={mapZoom}
               timeWindow={timeWindow}

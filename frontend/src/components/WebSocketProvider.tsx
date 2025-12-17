@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   WebSocketManager,
-  WebSocketMessage,
-  WebSocketContextType,
+  type WebSocketMessage,
+  type WebSocketContextType,
   WebSocketContext,
   useWebSocket as useSharedWebSocket,
 } from '../lib/websocket';
+
+export type { WebSocketContextType };
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
