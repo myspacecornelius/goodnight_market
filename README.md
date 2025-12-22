@@ -1,393 +1,123 @@
-# 🔥 Dharma
+# 🔥 Dharma (Night Market)
 ## *The Underground Network for Sneaker Culture*
 
 [![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://jdk.java.net/21/)
 [![CI](https://github.com/myspacecornelius/Night_Market/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/myspacecornelius/Night_Market/actions/workflows/ci-cd.yml)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/myspacecornelius/Night_Market)
 
 ## 🌟 The Vision
 
-**Dharma isn't just another sneaker bot.** It's the foundation for a new kind of sneaker community—one that rewards authenticity, celebrates local culture, and puts power back in the hands of real enthusiasts.
+**Dharma** is the foundation for a new kind of sneaker community—one that rewards authenticity, celebrates local culture, and puts power back in the hands of real enthusiasts.
 
 ### What We're Building
 
 - **🗺️ Hyperlocal Heatmaps**: Real-time signals from sneakerheads in your city
-- **🪙 LACES Token Economy**: Earn rewards for contributing to the community  
+- **🛍️ High-Performance Marketplace**: Fast, idempotent order processing backed by Java 21
+- **🪙 LACES Token Economy**: Earn rewards for contributing to the community
 - **🎯 Drop Zones**: Coordinate releases, share intel, build together
 - **🤝 Community-First**: No gatekeeping, no backdoors—just pure sneaker culture
-- **🔒 Privacy by Design**: Your data stays yours, always
-
-### Why It Matters
-
-The sneaker game has been hijacked by corporate interests and exclusive access. **Dharma brings it back to the streets.** We're creating infrastructure that serves the community, not just the highest bidder.
-
----
-
-## 🚀 Quick Start
-*Get Dharma running in under 3 minutes*
-
-### Prerequisites
-- Docker Desktop installed and running
-- Git (for cloning)
-- 5 minutes of your time
-
-### The 3-Step Onboarding
-
-```bash
-# 1️⃣ Clone and enter Dharma
-git clone https://github.com/myspacecornelius/Night_Market.git
-cd Night_Market
-
-# 2️⃣ Set up your environment
-make setup
-
-# 3️⃣ Launch the underground network
-make up
-```
-
-**That's it.** Open your browser to `http://localhost:5177` and witness Dharma come alive.
-
-### What You'll See
-
-- **📱 Live Community Feed**: Real sneaker signals from Boston, NYC, LA, and Chicago
-- **🗺️ Interactive Heatmap**: See where the culture is happening
-- **👟 Upcoming Drops**: Community-curated release calendar
-- **🪙 LACES Economy**: Token rewards for authentic participation
-- **📊 Analytics Dashboard**: Community health and engagement metrics
 
 ---
 
 ## 🏗️ Architecture
-*Built for scale, designed for community*
 
-### The Stack
+Dharma uses a hybrid microservices architecture to leverage the best tools for each job:
 
-```
-🎨 Frontend     → React + Vite + Tailwind (Modern, Fast, Beautiful)
-🔌 API          → FastAPI + SQLAlchemy (Python, Type-Safe, Async)
-🗄️ Database     → PostgreSQL + PostGIS (Geospatial, Reliable)
-⚡ Cache        → Redis (Lightning Fast)
-🔄 Workers      → Celery (Background Tasks, Scalable)
-📊 Monitoring   → Grafana + Prometheus (Observability)
-🐳 Infrastructure → Docker Compose (One Command Deploy)
-```
+### 🎨 Frontend (`/frontend`)
+- **Stack**: React 18, Vite, Tailwind CSS, TypeScript
+- **Role**: Responsive, mobile-first PWA for users.
 
-### Key Services
+### ☕ Core Backend (`/backend-java`)
+- **Stack**: Java 21, Spring Boot 3, Hibernate
+- **Role**: High-performance transaction processing, Marketplace Search, Feed generation, Idempotency.
+- **Status**: **New!** Phase 2 Upgrade.
 
-- **`api`** - Core FastAPI application serving the community
-- **`frontend`** - React app where the magic happens
-- **`worker`** - Background tasks for notifications, data processing
-- **`postgres`** - Community data with geospatial superpowers
-- **`redis`** - Real-time caching and message queuing
-- **`grafana`** - Beautiful dashboards for community insights
+### 🐍 Data Services (`/services`)
+- **Stack**: Python 3.11, FastAPI, SQLAlchemy, Celery
+- **Role**: Legacy API, geospatial heavy-lifting (H3), background workers, data seeding.
+
+### 🐳 Infrastructure
+- **PostgreSQL 15**: Primary data store with PostGIS.
+- **Redis**: Caching and message broker.
+- **Grafana + Prometheus**: Observability stack.
 
 ---
 
-## 🛍️ Marketplace Feed v2 (Hyperlocal Listings)
-*Underground marketplace, block-level awareness*
+## 🚀 Quick Start
 
-The **Feed v2** system powers a hyperlocal marketplace experience:
+### Prerequisites
+- **Docker Desktop** (essential for running the full stack)
+- **Java 21 JDK** (for backend development)
+- **Node.js 18+** (for frontend development)
+- **Python 3.11** (for services development)
 
-- **Listings Feed**: H3-indexed listings ranked by proximity, demand, and freshness
-- **Neighborhood Heat Index**: Demand metrics per micro-neighborhood (saves, views, DMs, trades)
-- **Activity Ribbon**: Real-time ticker of new listings, price drops, sales, and trade activity
-- **Trade Match Layer**: Suggested trades based on your inventory and wishlist
+### The 1-Command Launch
 
-### Backend Components
-
-- `services/core/h3_geo.py` – Uber H3 geospatial helpers
-- `services/models/listing.py` – `Listing` + `ListingSave` models
-- `services/models/feed_event.py` – `FeedEvent` for event-driven activity
-- `services/models/heat_index.py` – `NeighborhoodHeatIndex` with heat scoring
-- `services/models/trade_match.py` – `TradeMatch` + `UserWishlist`
-- `services/routers/feed_v2.py` – Hyperlocal feed, heat index, activity ribbon, trade matches, listing CRUD
-- `services/routers/activity_stream.py` – WebSocket activity stream
-- `worker/feed_tasks.py` – Celery tasks for ranking, heat updates, trade matching, cleanup
-- `services/alembic/versions/004_feed_v2_models.py` – DB migration for all of the above
-
-### Core API Endpoints
-
-```text
-GET  /v2/feed/hyperlocal          # Hyperlocal listings feed
-GET  /v2/feed/heat-index          # Neighborhood heat index for a point
-GET  /v2/feed/heat-index/map      # Heatmap-ready data
-GET  /v2/feed/activity-ribbon     # Recent activity ticker
-GET  /v2/feed/trade-matches       # Suggested trades for current user
-POST /v2/feed/trade-matches/{id}/accept
-POST /v2/feed/trade-matches/{id}/decline
-
-POST /v2/listings                 # Create listing
-GET  /v2/listings/{id}            # Listing detail
-POST /v2/listings/{id}/save       # Save/bookmark listing
-DELETE /v2/listings/{id}/save     # Un-save
-POST /v2/listings/{id}/price-drop # Register a price drop
-POST /v2/listings/{id}/sold       # Mark as sold
-
-WS   /ws/activity                 # Real-time feed events by geo
-WS   /ws/listing/{id}             # Real-time updates for a listing
-```
-
-### Seeding Demo Marketplace Data
-
-The project includes a seed script to populate a realistic marketplace:
-
-- Cities: **Boston, NYC, LA, Chicago**
-- Brands: Jordan, Nike, Adidas, New Balance, Yeezy, etc.
-- Conditions: DS, VNDS, EXCELLENT, GOOD, FAIR
-- Automatic **heat index** computation per H3 cell
-
-Run from the repo root:
+To start the entire platform (Frontend + Java Backend + Python Services + Databases) using Docker:
 
 ```bash
-docker compose run --rm api python seed_listings.py clear
+make up
+```
+
+- **Frontend**: http://localhost:5173
+- **Java API**: http://localhost:8080 (Swagger: http://localhost:8080/swagger-ui.html)
+- **Python API**: http://localhost:8000 (Docs: http://localhost:8000/docs)
+- **Grafana**: http://localhost:3000
+
+To stop everything:
+```bash
+make down
+```
+
+---
+
+## 🛠️ Development Guides
+
+We have detailed guides for each component of the stack:
+
+### 👉 [Frontend Guide](frontend/README.md)
+*React, Vite, Components, State Management*
+
+### 👉 [Java Backend Guide](backend-java/README.md)
+*Spring Boot, Marketplace Logic, Search, Idempotency*
+
+### 👉 [Python Services Guide](services/README.md)
+*FastAPI, Celery, Geospatial Logic, Seeding*
+
+---
+
+## 🔧 Common Tasks
+
+### Seeding Data
+Populate the database with realistic demo data (users, listings, heatmaps):
+
+```bash
+# Run the python seed script inside the api container
 docker compose run --rm api python seed_listings.py 100
 ```
 
-> Note: `make up` already runs migrations. Seeding is optional but highly recommended for the demo.
-
-### Frontend Experience
-
-- **Route**: `http://localhost:5177/marketplace`
-- **Page**: `frontend/src/pages/MarketplacePage.tsx`
-- **Components**:
-  - `ListingCard` (`frontend/src/components/marketplace/ListingCard.tsx`)
-  - `ActivityRibbon` (`frontend/src/components/marketplace/ActivityRibbon.tsx`)
-
-The Marketplace page:
-
-- Detects your location (or defaults to Boston)
-- Calls the `/v2/feed/hyperlocal` endpoint via `apiClient.getHyperlocalListings()`
-- Shows:
-  - Grid of nearby listings with price, condition, distance, and engagement stats
-  - Live activity ribbon showing new listings and price drops
-  - Heat level badge (cold / warm / hot / fire) based on `NeighborhoodHeatIndex`
-  - Filters for radius, sort, condition, and text search
-
----
-
-## 🛠️ Development Guide
-*Join the builders*
-
-### Essential Commands
-
+### Running Tests
 ```bash
-make help      # 📖 See all available commands
-make up        # 🚀 Start all services  
-make down      # 🛑 Stop everything
-make logs      # 📋 Watch the magic happen
-make doctor    # 🩺 Health check your setup
-make test      # 🧪 Run the test suite
-make clean     # 🧹 Clean slate reset
+# Frontend Tests
+cd frontend && npm test
+
+# Java Backend Tests
+cd backend-java && ./mvnw test
+
+# Python Services Tests
+cd services && pytest
 ```
-
-### Project Structure
-
-```
-Dharma/
-├── 🎨 frontend/          # React + Vite app - where users experience Dharma
-│   ├── src/             # Source code
-│   │   ├── components/  # Reusable UI components
-│   │   ├── pages/       # Page components
-│   │   ├── lib/         # Utilities and helpers
-│   │   └── hooks/       # Custom React hooks
-│   └── package.json     # Frontend dependencies
-├── 🔌 services/         # FastAPI backend - the community engine
-│   ├── routers/         # API endpoints
-│   ├── models/          # Database schemas
-│   ├── core/            # Business logic
-│   ├── middleware/      # Request middleware
-│   └── alembic/         # Database migrations
-├── 👷 worker/           # Celery background tasks
-├── 📊 infra/            # Monitoring and observability
-├── 🧪 tests/            # Quality assurance
-├── 📝 docs/             # API documentation
-├── .env                 # Environment configuration
-└── Makefile             # Development commands
-```
-
-### Adding Features
-
-**Want to contribute?** Here's how to add value to the community:
-
-1. **New API Endpoints**: Add to `services/routers/`
-2. **Database Models**: Extend `services/models/`
-3. **Frontend Components**: Build in `frontend/src/components/`
-4. **Background Tasks**: Create in `worker/tasks.py`
-5. **Tests**: Always add to `tests/`
-
-### Code Philosophy
-
-- **🎯 Purpose-Driven**: Every line serves the community
-- **🔒 Privacy-First**: User data protection is non-negotiable  
-- **⚡ Performance**: Fast is a feature
-- **🧪 Tested**: Quality over quantity
-- **📖 Documented**: Code should tell a story
 
 ---
 
 ## 🌍 The Community
-*This is bigger than code*
 
 ### How to Contribute
-
-**🐛 Found a Bug?** Open an issue with details and steps to reproduce.
-
-**💡 Have an Idea?** Start a discussion—we love hearing from the community.
-
-**🔧 Want to Code?** 
 1. Fork the repo
 2. Create a feature branch
 3. Make your changes
 4. Add tests
-5. Submit a PR with a clear description
+5. Submit a PR
 
-**📖 Improve Docs?** Documentation PRs are always welcome.
-
-### Community Values
-
-- **🤝 Inclusive**: Everyone belongs in sneaker culture
-- **🔒 Transparent**: Open source, open process, open community
-- **🎯 Authentic**: Real people, real passion, real impact
-- **🚀 Innovative**: Push boundaries, challenge norms
-- **🌱 Sustainable**: Build for the long term
-
----
-
-## 🪙 LACES Token Economy
-*Rewarding authentic participation*
-
-### How You Earn LACES
-
-- **📍 Location Signals**: Share real-time sneaker intel
-- **🤝 Community Help**: Assist with legit checks, sizing, advice
-- **🔧 Code Contributions**: Build features, fix bugs, improve docs
-- **📊 Data Quality**: Accurate drop info, store updates
-- **🎨 Content Creation**: Guides, tutorials, community resources
-
-### What LACES Unlock
-
-- **🎯 Priority Access**: Early access to new features
-- **🗳️ Governance Rights**: Vote on community decisions
-- **🏆 Recognition**: Leaderboards and community status
-- **🎁 Exclusive Content**: Special drops, insider info
-- **🤝 Networking**: Connect with other high-value contributors
-
----
-
-## 🔧 Configuration
-*Customize your Night Market experience*
-
-### Environment Variables
-
-Copy `.env.example` to `.env` and customize:
-
-```bash
-# 🗄️ Database
-DATABASE_URL=postgresql://dharma:password@postgres:5432/dharma
-
-# ⚡ Cache  
-REDIS_URL=redis://redis:6379/0
-
-# 🔌 API
-API_PORT=8000
-JWT_SECRET_KEY=your_secret_here
-
-# 🎨 Frontend
-FRONTEND_PORT=5173
-VITE_API_URL=http://localhost:8000
-
-# 🌱 Demo Data
-AUTO_SEED_DATA=true
-DEMO_USERS_COUNT=50
-DEMO_POSTS_COUNT=200
-```
-
-### Advanced Configuration
-
-- **🔒 Security**: Configure JWT, CORS, rate limiting
-- **📊 Monitoring**: Set up Grafana dashboards
-- **🌐 Deployment**: Production environment variables
-- **🔧 Workers**: Celery task configuration
-
----
-
-## 🚀 Deployment
-*Take Night Market to production*
-
-### Docker Compose (Recommended)
-
-```bash
-# Production deployment
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Cloud Deployment
-
-Dharma is designed to run anywhere:
-
-- **☁️ AWS**: ECS, RDS, ElastiCache
-- **🌊 DigitalOcean**: App Platform, Managed Databases  
-- **🔵 Azure**: Container Instances, PostgreSQL
-- **🌐 Google Cloud**: Cloud Run, Cloud SQL
-- **⚡ Railway/Render**: One-click deployment
-
----
-
-## 📊 Monitoring & Observability
-
-### Built-in Dashboards
-
-- **📈 Grafana**: `http://localhost:3000` (admin/admin)
-- **🔍 Prometheus**: `http://localhost:9090`
-- **🩺 Health Checks**: `http://localhost:8000/health`
-
-### Key Metrics
-
-- **👥 Community Growth**: User registrations, engagement
-- **📍 Location Activity**: Geographic distribution of signals
-- **🪙 Token Economy**: LACES circulation, earning patterns
-- **⚡ Performance**: API response times, error rates
-- **🔧 Infrastructure**: Database performance, worker queues
-
----
-
-## 🤝 Join the Movement
-
-### Connect With Us
-
-- **💬 Discord**: [Join our community](https://discord.gg/dharma)
-- **🐦 Twitter**: [@DharmaNetwork](https://twitter.com/dharmanetwork)
-- **📧 Email**: community@dharma.network
-- **🌐 Website**: [dharma.network](https://dharma.network)
-
-### Support the Project
-
-- **⭐ Star the Repo**: Show your support
-- **🔄 Share**: Spread the word in your community
-- **🐛 Report Issues**: Help us improve
-- **💰 Sponsor**: Support ongoing development
-
----
-
-## 📜 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-Built with ❤️ by the sneaker community, for the sneaker community.
-
----
-
-## 🔥 Ready to Build?
-
-```bash
-git clone https://github.com/myspacecornelius/Night_Market.git
-cd Night_Market-6
-make setup && make up
-```
-
-**Welcome to the underground. Let's build the future of sneaker culture together.**
-
----
-
-*"The best way to predict the future is to build it."*
-*— The Dharma Community*
+### License
+MIT License. Built with ❤️ by the sneaker community.
