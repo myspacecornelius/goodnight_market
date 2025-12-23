@@ -10,6 +10,7 @@ import './index.css'
 import { ThemeProvider } from './components/ThemeProvider'
 import { AuthProvider } from './hooks/useAuth'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { WebSocketProvider } from './components/WebSocketProvider'
 
 console.log('🔥 Dharma - Starting the underground network...')
 
@@ -42,19 +43,22 @@ try {
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider defaultTheme="dark" storageKey="dharma-theme">
-              <RouterProvider router={router} />
-              <Toaster position="top-right" />
+            <ThemeProvider defaultTheme="light" storageKey="dharma-theme">
+              <WebSocketProvider>
+                <RouterProvider router={router} />
+                <Toaster position="top-right" />
+              </WebSocketProvider>
             </ThemeProvider>
           </AuthProvider>
-          {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} position="bottom-right" /> : null}
+          {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
         </QueryClientProvider>
       </ErrorBoundary>
     </React.StrictMode>
   )
   
   console.log('🚀 Dharma successfully mounted!')
-} catch (error) {
+} catch (err) {
+  const error = err as Error
   console.error('❌ Failed to mount Dharma:', error)
   root.innerHTML = `
     <div style="
